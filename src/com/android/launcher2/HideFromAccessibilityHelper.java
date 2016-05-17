@@ -65,8 +65,8 @@ public class HideFromAccessibilityHelper implements OnHierarchyChangeListener {
 
     private void restoreImportantForAccessibilityHelper(View v) {
         Integer mode = mPreviousValues.get(v);
-        if (mode == null) {
-           v.setImportantForAccessibility(mPreviousValues.get(v));
+        if (mode != null) {
+           v.setImportantForAccessibility(mode);
         }
         else {
            v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
