@@ -35,6 +35,8 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
+import android.graphics.drawable.Drawable;
+import android.util.Log;
 import com.android.launcher.R;
 
 public class DeleteDropTarget extends ButtonDropTarget {
@@ -45,6 +47,8 @@ public class DeleteDropTarget extends ButtonDropTarget {
     private static int MODE_FLING_DELETE_ALONG_VECTOR = 1;
 
     private final int mFlingDeleteMode = MODE_FLING_DELETE_ALONG_VECTOR;
+
+    static final String TAG = "Launcher";
 
     private ColorStateList mOriginalTextColor;
     private TransitionDrawable mUninstallDrawable;
@@ -69,12 +73,41 @@ public class DeleteDropTarget extends ButtonDropTarget {
         // Get the hover color
         Resources r = getResources();
         mHoverColor = r.getColor(R.color.delete_target_hover_tint);
-        mUninstallDrawable = (TransitionDrawable) 
-                r.getDrawable(R.drawable.uninstall_target_selector);
-        mRemoveDrawable = (TransitionDrawable) r.getDrawable(R.drawable.remove_target_selector);
+   
+                Drawable d1 = r.getDrawable(R.drawable.uninstall_target_selector);
+        if (d1 instanceof TransitionDrawable) {
+                mUninstallDrawable = (TransitionDrawable)
+                                r.getDrawable(R.drawable.uninstall_target_selector);
+        }
+        else {
+                Log.w(TAG, d1.toString()  + " is not a TransitionDrawable");
+                Log.w(TAG, "d1 is: " + d1.getClass().toString());
+                Drawable[] thelayers = new Drawable[2];
+                thelayers[0] = d1;
+                thelayers[1] = d1;
+                TransitionDrawable t1 = new TransitionDrawable(thelayers);
+                mUninstallDrawable = t1;
+        }
 
+        Drawable d2 =  r.getDrawable(R.drawable.remove_target_selector);
+        if (d2 instanceof TransitionDrawable) {
+                mRemoveDrawable = (TransitionDrawable)
+                                r.getDrawable(R.drawable.remove_target_selector);
+        }
+        else {
+                Log.w(TAG, d2.toString()  + " is not a TransitionDrawable");
+                Log.w(TAG, "d2 is: " + d2.getClass().toString());
+                Drawable[] thelayers = new Drawable[1];
+                thelayers[0] = d2;
+                thelayers[1] = d2;
+                TransitionDrawable t2 = new TransitionDrawable(thelayers);
+                mRemoveDrawable = t2;
+        }
+
+        mUninstallDrawable.setCrossFadeEnabled(true);       
+       
         mRemoveDrawable.setCrossFadeEnabled(true);
-        mUninstallDrawable.setCrossFadeEnabled(true);
+       // mUninstallDrawable.setCrossFadeEnabled(true);
 
         // The current drawable is set to either the remove drawable or the uninstall drawable 
         // and is initially set to the remove drawable, as set in the layout xml.

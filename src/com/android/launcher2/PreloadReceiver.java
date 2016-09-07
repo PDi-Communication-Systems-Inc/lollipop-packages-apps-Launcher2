@@ -48,7 +48,7 @@ public class PreloadReceiver extends BroadcastReceiver {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    provider.loadDefaultFavoritesIfNecessary(workspaceResId, overridePrevious);
+                    provider.loadDefaultFavoritesIfNecessary(workspaceResId);
                 }
             }).start();
         }

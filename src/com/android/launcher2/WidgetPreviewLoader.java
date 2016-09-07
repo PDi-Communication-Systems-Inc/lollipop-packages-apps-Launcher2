@@ -526,7 +526,7 @@ public class WidgetPreviewLoader {
                         (int) ((previewDrawableHeight - mAppIconSize * iconScale) / 2);
                 if (info.icon > 0)
                     icon = mIconCache.getFullResIcon(info.provider.getPackageName(),
-                            info.icon, info.getProfile());
+                            info.icon);
                 if (icon != null) {
                     renderDrawableToBitmap(icon, defaultPreview, hoffset,
                             yoffset, (int) (mAppIconSize * iconScale),
@@ -631,7 +631,7 @@ public class WidgetPreviewLoader {
             c.setBitmap(null);
         }
         // Render the icon
-        Drawable icon = mIconCache.getFullResIcon(info, android.os.Process.myUserHandle());
+        Drawable icon = mIconCache.getFullResIcon(info);
 
         int paddingTop = mContext.
                 getResources().getDimensionPixelOffset(R.dimen.shortcut_preview_padding_top);

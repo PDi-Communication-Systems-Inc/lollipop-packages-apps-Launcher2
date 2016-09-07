@@ -275,4 +275,24 @@ s -->
     <!-- Dummy string [CHAR_LIMIT=60] -->
     <string name="custom_workspace_cling_description_2"></string>
 
+    <!-- PDi Additions -->
+    <string name="welcome_head">WELCOME</string>
+    <string name="welcome_intro">PDi-Tab can bring you more than just TV. A few steps before we start:</string>
+    <string name="permission_secure_device">Secure Device - Ask your permission to Administer this PDi-TAB to secure your data</string>
+    <string name="choose_password">Step 1 - Secure your personal data - choose a password for yourself</string>
+    <string name="home_screen">Step 2 - Device Setup - Device will configure itself and take you to the home screen</string>
+    <string name="touch_here">Continue</string>
+    <string name="change_language">Change Language</string>
+    <string name="food_analyzer">Food Analyzer</string>
+    <string name="kidney_smart">Kidney Smart</string>
+    <string name="kidney_disease">Kidney Disease</string>
+    <string name="davita_tools">MyDavita</string>
+    <string name="working_on_dialysis">Work &amp; Dialysis</string>
+    <string name="facebook">Facebook</string>
+    <string name="foxnews">Fox News</string>
+    <string name="cnn">CNN</string>
+    <string name="pinterest">Pinterest</string>
+    <string name="nxsteps_training">Training</string>
+    <string name="todo">TODO</string>
+<!-- End PDi Additions -->
 </resources>

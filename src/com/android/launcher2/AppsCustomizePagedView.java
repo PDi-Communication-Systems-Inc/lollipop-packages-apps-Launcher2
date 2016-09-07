@@ -746,8 +746,7 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
             PendingAddShortcutInfo createShortcutInfo = (PendingAddShortcutInfo) v.getTag();
             // Widgets are only supported for current user, not for other profiles.
             // Hence use myUserHandle().
-            Drawable icon = mIconCache.getFullResIcon(createShortcutInfo.shortcutActivityInfo,
-                    android.os.Process.myUserHandle());
+            Drawable icon = mIconCache.getFullResIcon(createShortcutInfo.shortcutActivityInfo);
             preview = Bitmap.createBitmap(icon.getIntrinsicWidth(),
                     icon.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
 

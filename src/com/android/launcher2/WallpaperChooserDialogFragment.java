@@ -206,7 +206,13 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
 
     private void addWallpapers(Resources resources, String packageName, int list) {
         final String[] extras = resources.getStringArray(list);
-        for (String extra : extras) {
+          Log.d(TAG,"Number of wallpapers to add:" +extras.length);
+          Log.d(TAG,"Working with package:" +packageName);
+          Log.d(TAG,"list:" +list);
+
+          for (String extra : extras) {
+          Log.d(TAG,"working With" +extra);
+     
             int res = resources.getIdentifier(extra, "drawable", packageName);
             if (res != 0) {
                 final int thumbRes = resources.getIdentifier(extra + "_small",
@@ -217,9 +223,14 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
                     mImages.add(res);
                     // Log.d(TAG, "add: [" + packageName + "]: " + extra + " (" + res + ")");
                 }
+                else {
+                Log.e(TAG,"Thumb resource for" +extra+ "not found");
             }
+         }
+              else {
+              Log.e(TAG,"Resource" +res + "not found");
         }
-    }
+    } }
 
     private class ImageAdapter extends BaseAdapter implements ListAdapter, SpinnerAdapter {
         private LayoutInflater mLayoutInflater;

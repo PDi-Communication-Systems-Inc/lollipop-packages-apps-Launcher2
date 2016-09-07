@@ -1,0 +1,44 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+     <ImageView android:id="@+id/appIcon"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp" 
+        android:focusable="false"
+		android:focusableInTouchMode="false"
+        android:contentDescription="@string/todo"/>
+       
+     <TextView android:id="@+id/appTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:textStyle="normal"
+        android:textSize="28sp"
+        android:textColor="#ffffff"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp" 
+        android:focusable="false"
+		android:focusableInTouchMode="false"/>
+
+     <Switch android:id="@+id/appSwitch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:textOn="Enable"
+        android:textOff="Disable"
+		android:onClick="onToggleClicked" 
+		android:focusable="false"
+		android:focusableInTouchMode="false"/>
+
+</LinearLayout>

@@ -25,7 +25,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.os.UserHandle;
 import android.util.Log;
-
+import android.content.pm.PackageManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -64,7 +64,7 @@ class ApplicationInfo extends ItemInfo {
     /**
      * Must not hold the Context.
      */
-    public ApplicationInfo(LauncherActivityInfo info, UserHandle user, IconCache iconCache,
+   /*  public ApplicationInfo(LauncherActivityInfo info, UserHandle user, IconCache iconCache,
             HashMap<Object, CharSequence> labelCache) {
 
         this.componentName = info.getComponentName();
@@ -86,8 +86,34 @@ class ApplicationInfo extends ItemInfo {
         intent.setComponent(info.getComponentName());
         intent.putExtra(EXTRA_PROFILE, user);
         updateUser(intent);
-    }
+    } */
 
+        public ApplicationInfo(PackageManager pm, ResolveInfo info, IconCache iconCache,
+            HashMap<Object, CharSequence> labelCache) {
+        final String packageName = info.activityInfo.applicationInfo.packageName;
+
+        this.componentName = new ComponentName(packageName, info.activityInfo.name);
+        this.container = ItemInfo.NO_ID;
+        this.setActivity(componentName,
+                Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+        try {
+            int appFlags = pm.getApplicationInfo(packageName, 0).flags;
+            if ((appFlags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) {
+                flags |= DOWNLOADED_FLAG;
+
+                if ((appFlags & android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
+                    flags |= UPDATED_SYSTEM_APP_FLAG;
+                }
+            }
+            firstInstallTime = pm.getPackageInfo(packageName, 0).firstInstallTime;
+        } catch (NameNotFoundException e) {
+            Log.d(TAG, "PackageManager.getApplicationInfo failed for " + packageName);
+        }
+
+        iconCache.getTitleAndIcon(this, info, labelCache);
+    }
+ 
     public ApplicationInfo(ApplicationInfo info) {
         super(info);
         componentName = info.componentName;

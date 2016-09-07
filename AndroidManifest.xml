@@ -19,7 +19,10 @@
 -->
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.launcher">
+    package="com.android.launcher"
+    coreApp="true"
+    android:sharedUserId="android.uid.system" >
+>
 
     <original-package android:name="com.android.launcher2" />
 
@@ -60,6 +63,27 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
     <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS" />
+        
+       <!-- Start PDi Additions -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.SET_TIME_ZONE" />
+
+    <uses-permission android:name="android.permission.MANAGE_USERS"/>
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!--  End PDi Additions -->
+
 
     <application
         android:name="com.android.launcher2.LauncherApplication"
@@ -84,6 +108,41 @@
                 <category android:name="android.intent.category.MONKEY"/>
             </intent-filter>
         </activity>
+              
+             <!-- Start PDi Additions -->
+        <activity
+            android:name="com.android.launcher2.ForceUserPassword"
+            android:label="@string/application_name"
+            android:icon="@mipmap/ic_launcher_home"
+            android:finishOnCloseSystemDialogs="false"
+            android:enabled="true"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.FORCE_PASSWORD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.android.launcher2.AppChoiceView"
+            android:label="@string/app_choice_view_name"
+            android:finishOnCloseSystemDialogs="false"
+            android:enabled="true"
+            android:screenOrientation="landscape">
+        </activity>
+
+        <receiver android:name="com.android.launcher2.ForceUserPassword$DeviceAdminSampleReceiver"
+                android:label="@string/application_name"
+                android:description="@string/application_name"
+                                android:enabled="true"
+                android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"  android:resource="@xml/default_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+                <action android:name="android.app.action.DEVICE_ADMIN_DISABLED" />
+            </intent-filter>
+        </receiver>
+             
 
         <activity
             android:name="com.android.launcher2.WallpaperChooser"
@@ -99,6 +158,8 @@
             <meta-data android:name="android.wallpaper.preview"
                 android:resource="@xml/wallpaper_picker_preview" />
         </activity>
+                   <!--  End PDi Additions -->
+                 
 
         <!-- Intent received used to prepopulate the default workspace. -->
         <receiver
@@ -155,5 +216,10 @@
 
         <meta-data android:name="android.nfc.disable_beam_default"
                        android:value="true" />
+
+        <!-- PDi App Permissions Provider -->
+          <provider android:name="com.android.launcher2.AppChoiceContentProvider"
+               android:authorities="com.android.launcher2.AppChoiceEntry" />        
+
     </application>
 </manifest>

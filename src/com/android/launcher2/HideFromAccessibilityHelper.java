@@ -64,6 +64,11 @@ public class HideFromAccessibilityHelper implements OnHierarchyChangeListener {
     }
 
     private void restoreImportantForAccessibilityHelper(View v) {
+        //First boot seems to generate nullpointer exception here
+          if(v==null){
+          return;
+        }
+        
         Integer mode = mPreviousValues.get(v);
         if (mode != null) {
            v.setImportantForAccessibility(mode);

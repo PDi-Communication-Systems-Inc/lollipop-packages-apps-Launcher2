@@ -50,22 +50,22 @@ public class IconCache {
 
     private static class CacheKey {
         public ComponentName componentName;
-        public UserHandle user;
+       // public UserHandle user;
 
-        CacheKey(ComponentName componentName, UserHandle user) {
+        CacheKey(ComponentName componentName) {
             this.componentName = componentName;
-            this.user = user;
+         //   this.user = user;
         }
 
         @Override
         public int hashCode() {
-            return componentName.hashCode() + user.hashCode();
+            return componentName.hashCode();
         }
 
         @Override
         public boolean equals(Object o) {
             CacheKey other = (CacheKey) o;
-            return other.componentName.equals(componentName) && other.user.equals(user);
+            return other.componentName.equals(componentName);
         }
     }
 
@@ -89,10 +89,10 @@ public class IconCache {
 
     public Drawable getFullResDefaultActivityIcon() {
         return getFullResIcon(Resources.getSystem(),
-                android.R.mipmap.sym_def_app_icon, android.os.Process.myUserHandle());
+                android.R.mipmap.sym_def_app_icon);
     }
 
-    public Drawable getFullResIcon(Resources resources, int iconId, UserHandle user) {
+  /*  public Drawable getFullResIcon(Resources resources, int iconId, UserHandle user) {
         Drawable d;
         try {
             d = resources.getDrawableForDensity(iconId, mIconDpi);
@@ -144,6 +144,56 @@ public class IconCache {
         }
         return getFullResDefaultActivityIcon();
     }
+*/
+
+        public Drawable getFullResIcon(Resources resources, int iconId) {
+        Drawable d;
+        try {
+            d = resources.getDrawableForDensity(iconId, mIconDpi);
+        } catch (Resources.NotFoundException e) {
+            d = null;
+        }
+
+        return (d != null) ? d : getFullResDefaultActivityIcon();
+    }
+
+    public Drawable getFullResIcon(String packageName, int iconId) {
+        Resources resources;
+        try {
+            resources = mPackageManager.getResourcesForApplication(packageName);
+        } catch (PackageManager.NameNotFoundException e) {
+            resources = null;
+        }
+        if (resources != null) {
+            if (iconId != 0) {
+                return getFullResIcon(resources, iconId);
+            }
+        }
+        return getFullResDefaultActivityIcon();
+    }
+
+    public Drawable getFullResIcon(ResolveInfo info) {
+        return getFullResIcon(info.activityInfo);
+    }
+
+    public Drawable getFullResIcon(ActivityInfo info) {
+
+        Resources resources;
+        try {
+            resources = mPackageManager.getResourcesForApplication(
+                    info.applicationInfo);
+        } catch (PackageManager.NameNotFoundException e) {
+            resources = null;
+        }
+        if (resources != null) {
+            int iconId = info.getIconResource();
+            if (iconId != 0) {
+                return getFullResIcon(resources, iconId);
+            }
+        }
+        return getFullResDefaultActivityIcon();
+    }
+
 
     private Bitmap makeDefaultIcon() {
         Drawable d = getFullResDefaultActivityIcon();
@@ -178,19 +228,28 @@ public class IconCache {
     /**
      * Fill in "application" with the icon and label for "info."
      */
-    public void getTitleAndIcon(ApplicationInfo application, LauncherActivityInfo info,
+  /*  public void getTitleAndIcon(ApplicationInfo application, LauncherActivityInfo info,
             HashMap<Object, CharSequence> labelCache) {
         synchronized (mCache) {
-            CacheEntry entry = cacheLocked(application.componentName, info, labelCache,
-                    info.getUser());
+            CacheEntry entry = cacheLocked(application.componentName, info, labelCache);
 
             application.title = entry.title;
             application.iconBitmap = entry.icon;
             application.contentDescription = entry.contentDescription;
         }
+    } */
+
+   public void getTitleAndIcon(ApplicationInfo application, ResolveInfo info,
+            HashMap<Object, CharSequence> labelCache) {
+        synchronized (mCache) {
+            CacheEntry entry = cacheLocked(application.componentName, info, labelCache);
+
+            application.title = entry.title;
+            application.iconBitmap = entry.icon;
+        }
     }
 
-    public Bitmap getIcon(Intent intent, UserHandle user) {
+   /*  public Bitmap getIcon(Intent intent) {
         synchronized (mCache) {
             LauncherApps launcherApps = (LauncherApps)
                     mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE);
@@ -205,9 +264,23 @@ public class IconCache {
             CacheEntry entry = cacheLocked(component, launcherActInfo, null, user);
             return entry.icon;
         }
+    } */
+
+     public Bitmap getIcon(Intent intent) {
+        synchronized (mCache) {
+            final ResolveInfo resolveInfo = mPackageManager.resolveActivity(intent, 0);
+            ComponentName component = intent.getComponent();
+
+            if (resolveInfo == null || component == null) {
+                return mDefaultIcon;
+            }
+
+            CacheEntry entry = cacheLocked(component, resolveInfo, null);
+            return entry.icon;
+        }
     }
 
-    public Bitmap getIcon(ComponentName component, LauncherActivityInfo info,
+    /* public Bitmap getIcon(ComponentName component, LauncherActivityInfo info,
             HashMap<Object, CharSequence> labelCache) {
         synchronized (mCache) {
             if (info == null || component == null) {
@@ -217,36 +290,88 @@ public class IconCache {
             CacheEntry entry = cacheLocked(component, info, labelCache, info.getUser());
             return entry.icon;
         }
+    } */
+
+         public Bitmap getIcon(ComponentName component, ResolveInfo resolveInfo,
+            HashMap<Object, CharSequence> labelCache) {
+        synchronized (mCache) {
+            if (resolveInfo == null || component == null) {
+                return null;
+            }
+
+            CacheEntry entry = cacheLocked(component, resolveInfo, labelCache);
+            return entry.icon;
+        }
     }
+
 
     public boolean isDefaultIcon(Bitmap icon) {
         return mDefaultIcon == icon;
     }
 
-    private CacheEntry cacheLocked(ComponentName componentName, LauncherActivityInfo info,
-            HashMap<Object, CharSequence> labelCache, UserHandle user) {
-        CacheKey cacheKey = new CacheKey(componentName, user);
+    private CacheEntry cacheLocked(ComponentName componentName, ResolveInfo info,
+            HashMap<Object, CharSequence> labelCache) {
+        CacheKey cacheKey = new CacheKey(componentName);
         CacheEntry entry = mCache.get(cacheKey);
         if (entry == null) {
             entry = new CacheEntry();
 
             mCache.put(cacheKey, entry);
 
-            ComponentName key = info.getComponentName();
+           // ComponentName key = info.getComponentName();
+            ComponentName key = LauncherModel.getComponentNameFromResolveInfo(info);
             if (labelCache != null && labelCache.containsKey(key)) {
                 entry.title = labelCache.get(key).toString();
             } else {
-                entry.title = info.getLabel().toString();
+                entry.title = info.loadLabel(mPackageManager).toString();
                 if (labelCache != null) {
                     labelCache.put(key, entry.title);
                 }
             }
             if (entry.title == null) {
-                entry.title = info.getComponentName().getShortClassName();
+                entry.title = info.activityInfo.name;
             }
-            entry.contentDescription = mPackageManager.getUserBadgedLabel(entry.title, user);
-            entry.icon = Utilities.createIconBitmap(info.getBadgedIcon(mIconDpi), mContext);
+           // entry.contentDescription = mPackageManager.getUserBadgedLabel(entry.title, user);
+            entry.icon = Utilities.createIconBitmap(getFullResIcon(info), mContext);
         }
         return entry;
     }
+
+  /*  private CacheEntry cacheLocked(ComponentName componentName, ResolveInfo info,
+            HashMap<Object, CharSequence> labelCache) {
+        CacheEntry entry = mCache.get(componentName);
+        if (entry == null) {
+            entry = new CacheEntry();
+
+            mCache.put(componentName, entry);
+
+            ComponentName key = LauncherModel.getComponentNameFromResolveInfo(info);
+            if (labelCache != null && labelCache.containsKey(key)) {
+                entry.title = labelCache.get(key).toString();
+            } else {
+                entry.title = info.loadLabel(mPackageManager).toString();
+                if (labelCache != null) {
+                    labelCache.put(key, entry.title);
+                }
+            }
+            if (entry.title == null) {
+                entry.title = info.activityInfo.name;
+            }
+
+            entry.icon = Utilities.createIconBitmap(
+                    getFullResIcon(info), mContext);
+        }
+        return entry;
+    }
+*/
+/*  public HashMap<ComponentName,Bitmap> getAllIcons() {
+        synchronized (mCache) {
+            HashMap<ComponentName,Bitmap> set = new HashMap<ComponentName,Bitmap>();
+            for (ComponentName cn : mCache.keySet()) {
+                final CacheEntry e = mCache.get(cn);
+                set.put(cn, e.icon);
+            }
+            return set;
+        }
+     } */
 }

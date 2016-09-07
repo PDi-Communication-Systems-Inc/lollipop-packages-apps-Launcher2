@@ -43,7 +43,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.content.pm.LauncherApps;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
@@ -51,8 +51,10 @@ import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -62,7 +64,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.StrictMode;
 import android.os.SystemClock;
-import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
@@ -113,7 +114,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import android.content.pm.PackageInfo;
 
 //PDi - Imports
 import android.os.PowerManager.WakeLock;
@@ -136,7 +136,6 @@ import android.os.PowerManager;
 
 
 //PDi - Imports
-
 
 /**
  * Default launcher application.
@@ -204,8 +203,6 @@ public final class Launcher extends Activity
     private static final String RUNTIME_STATE_PENDING_ADD_SPAN_Y = "launcher.add_span_y";
     // Type: parcelable
     private static final String RUNTIME_STATE_PENDING_ADD_WIDGET_INFO = "launcher.add_widget_info";
-    // Type: parcelable
-    private static final String RUNTIME_STATE_PENDING_ADD_WIDGET_ID = "launcher.add_widget_id";
 
     private static final String TOOLBAR_ICON_METADATA_NAME = "com.android.launcher.toolbar_icon";
     private static final String TOOLBAR_SEARCH_ICON_METADATA_NAME =
@@ -249,7 +246,6 @@ public final class Launcher extends Activity
 
     private ItemInfo mPendingAddInfo = new ItemInfo();
     private AppWidgetProviderInfo mPendingAddWidgetInfo;
-    private int mPendingAddWidgetId = -1;
 
     private int[] mTmpAddItemCellCoordinates = new int[2];
 
@@ -336,49 +332,111 @@ public final class Launcher extends Activity
 
     private BubbleTextView mWaitingForResume;
 
-        //Start - PDi Declaration
+    //Start - PDi Declaration
     private static final String PDI_PREFERENCES= "pdi_preferences";
-    
+
     private static final int REQUEST_CODE_CHOOSE_PASSWORD = 31;
     private static final String PASSWORD_HAS_BEEN_SET= "password_has_been_set";
     private static final String INTENT_FORCE_PASSWORD= "android.intent.action.FORCE_PASSWORD";
-    
+
     private static final String BOOTING_AFTER_WIPE_OR_FACTORY_RESET= "booting_after_wipe_or_factory_reset";
 
-        //constants for restoring wifi
+    //constants for restoring wifi
     private static final String WIFI_BACKUP_RELATIVE_PATH= "/admin";
     private static final String WIFI_BACKUP_FILE= "wifi.bk";
     private static final String WIFI_RESTORE_PATH= "/data/misc/wifi";
     private static final String WIFI_RESTORE_FILE= "wpa_supplicant.conf";
     private static final String PACKAGE_RESTORE_DATA_TO_SYSTEM = "com.pdiarm.restoredatatosystem";
     private static final String COMPONENT_RESTORE_DATA_TO_SYSTEM= "com.pdiarm.restoredatatosystem.WriteDataToSystem";
-    private static final int REQUEST_RESTORE_WIFI = 32;    
+    private static final int REQUEST_RESTORE_WIFI = 32;
     boolean m_pendingWifiRestoration = false;
     private Object m_wifi_bk_file_Lock = new Object();
     private final int NUMBER_OF_WIFI_RETRIES = 5;
     private final int MILLISEC_BETWEEN_WIFI_RETRIES = 1000;
 
-     //One time ask for wifi connection to be set
+
+    //variables for slave cloning
+    private static final int REQUEST_CODE_CLONE_SLAVE = 33;
+    boolean m_pendingCloning = false;
+
+    //variables for master configuration restore
+    private static final int REQUEST_CODE_CLONE_MASTER = 34;
+
+
+    //One time ask for wifi connection to be set
     private static boolean mHasWifiCofigurationBeenAsked = false;
-    private static final String HAS_WIFI_CONFIGURATION_BEEN_ASKED= "has_wifi_configuration_been_asked";    
+    private static final String HAS_WIFI_CONFIGURATION_BEEN_ASKED= "has_wifi_configuration_been_asked";
     private static final String LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME= "lifetimewificonfigurationasked.txt";
 
-    
 
-        
     //request code to start the applocker service
     private static final int REQUEST_CODE_START_LOCK_SERVICE = 35;
     private static boolean m_bHasApplockerActivityRequestBeenSent = false;
     private static final String APPLOCKER_SERVICE_NAME = "com.gueei.applocker.DetectorService" ;
-  
-   //   one time wifi enable per reboot
+
+    //one time wifi enable per reboot
     private static boolean m_hasOneTimeWifiEnabledBeenCalled = false;
-    
+
     //Device goes to suspend on the Welcome screen
     //Acquire wakelock to prevent the device from going to sleep
     WakeLock fullWakeLock;
-    
-    WakeLock partialWakeLock; 
+
+    WakeLock partialWakeLock;
+
+    private static boolean isConnectedOrConnectingToWifi(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager)
+            context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = null;
+        if (connectivityManager != null) {
+            networkInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        }
+        return networkInfo == null ? false : networkInfo.isConnectedOrConnecting();
+    }
+
+    private static boolean isConnectedOrConnectingToAny(Context context) {
+        ConnectivityManager connectivityManager
+              = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetworkInfo = null;
+        if (connectivityManager != null) {
+        activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        }
+        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
+    }
+
+    public  String convertStreamToString(InputStream is) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+          sb.append(line).append("\n");
+        }
+        is.close();
+        return sb.toString();
+    }
+
+    public String getStringFromFile (String filePath) throws Exception {
+        File fl = new File(filePath);
+        FileInputStream fin = new FileInputStream(fl);
+        return convertStreamToString(fin);
+        //Make sure you close all streams.
+    }
+
+    public byte[] getByteArrayFromFile (String filePath) throws Exception {
+        File fl = new File(filePath);
+        FileInputStream fin = new FileInputStream(fl);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] b = new byte[1024]; // 1024 bytes at a time
+        int bytesRead =0;
+        while ((bytesRead = fin.read(b)) != -1)
+        {
+        	bos.write(b,0,bytesRead);
+        }
+        return bos.toByteArray();
+
+        /*InputStreamReader isr = new InputStreamReader(fin,"ASCII");*/
+
+    }
 
     private void showToast(String toastMessage)
     {
@@ -398,21 +456,23 @@ public final class Launcher extends Activity
 			// Call the force user password activity
 			Intent intent = new Intent(INTENT_FORCE_PASSWORD);
 			startActivityForResult(intent, REQUEST_CODE_CHOOSE_PASSWORD);
-			Log.i(TAG,"Request to choose password has been sent");	
+			Log.i(TAG,"Request to choose password has been sent");
 			//sleep for a second in this thread
 			//android.os.SystemClock.sleep(1000);
-		} 
+		}
 		catch(Exception e)
 		{
-			showToast(e.getMessage());						
-			Log.e(TAG,e.getMessage());											
+			showToast(e.getMessage());
+			Log.e(TAG,e.getMessage());
 		}
     }
-  /*  private Boolean CopyLastKnownWifiData()
+
+
+    private Boolean CopyLastKnownWifiData()
     {
 			///////////////////////////////////////////////////
-			//A wifi.bk file exists means this is a restart post a "i'm a new user button" 
-			//Once a new user has been created (ie if the password has been set) we'll save wifi again on "i'm a new user button" 
+			//A wifi.bk file exists means this is a restart post a "i'm a new user button"
+			//Once a new user has been created (ie if the password has been set) we'll save wifi again on "i'm a new user button"
 			//So restore any wifi.bk data and
 			//Delete the file after restoring it - TODO
     		//////////////////////////////////////////////////
@@ -421,25 +481,25 @@ public final class Launcher extends Activity
 				Log.i(TAG, "m_pendingWifiRestoration is false , restoring wifi ...");
 				synchronized(m_wifi_bk_file_Lock)
 				{
-					File wifiFile = new File(Environment.getExternalStorageDirectory().toString() + WIFI_BACKUP_RELATIVE_PATH, WIFI_BACKUP_FILE);		        	
+					File wifiFile = new File(Environment.getExternalStorageDirectory().toString() + WIFI_BACKUP_RELATIVE_PATH, WIFI_BACKUP_FILE);
 					//the file would be deleted in onActivityresult function
-					if (wifiFile.exists() ) 
+					if (wifiFile.exists() )
 					{
 						Log.i(TAG, "wifi backup file found on the sdcard");
 						String wifiString="" , base64Wifi="";
 						//read the file
 						try {
 							base64Wifi = getStringFromFile(wifiFile.getPath());
-							
+
 							byte [] array = Base64.decode(base64Wifi, Base64.DEFAULT);
-							String otherString = new String(array,"UTF8");									
-							wifiString = wifiString + otherString;																				
-						} 
+							String otherString = new String(array,"UTF8");
+							wifiString = wifiString + otherString;
+						}
 						catch (Exception e) {
 							Log.e(TAG, "Error in reading file wifi.bk");
 							Log.e(TAG, e.getMessage());
 						}
-						
+
 						try
 						{
 							Intent intent = new Intent();
@@ -456,8 +516,8 @@ public final class Launcher extends Activity
 						}
 						catch(Exception e)
 						{
-						Log.e(TAG, e.getMessage());    			
-						}	
+						Log.e(TAG, e.getMessage());
+						}
 					}
 				}
 			}
@@ -466,11 +526,12 @@ public final class Launcher extends Activity
 				//consider doing FLAG_ACTIVITY_REORDER_TO_FRONT
 				return true; // a request is pending
 			}
-			
+
 			return false;
     }
-   */ 
-  /*   private void AskToConfigureWifi()
+
+
+    private void AskToConfigureWifi()
     {
     	Log.i(TAG, "In AskToConfigureWifi ");
     	SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
@@ -481,17 +542,17 @@ public final class Launcher extends Activity
     	{
     		//is there a file in the path /sdcard/admin/masterslaveconfigurationasked.txt
         	//<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-        	File masterSlaveConfigAskedFile = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/",LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME);		        	
+        	File masterSlaveConfigAskedFile = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/",LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME);
         	if (!masterSlaveConfigAskedFile.exists()) {
-        		
+
         		Log.i(TAG, LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME + " does not exist. ");
         		//this device has been powered on for the first time (or after a factory reset)
-        		
+
         		//create the admin folder
         		File sdcardDirPath = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/");
         		if(!sdcardDirPath.isDirectory())
         			sdcardDirPath.mkdirs();
-        		
+
         		File file = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/" + LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME);
         		file.createNewFile();
         		fos = new FileOutputStream(file);
@@ -499,7 +560,7 @@ public final class Launcher extends Activity
         		try
 				{
         			//double check with a preference value
-        			mHasWifiCofigurationBeenAsked = prefs.getBoolean(HAS_WIFI_CONFIGURATION_BEEN_ASKED, false);	        			
+        			mHasWifiCofigurationBeenAsked = prefs.getBoolean(HAS_WIFI_CONFIGURATION_BEEN_ASKED, false);
         			//Ask to configure the wifi if that is not enabled
         			if ((!mHasWifiCofigurationBeenAsked) && !isConnectedOrConnectingToAny(getApplicationContext())) //only enable wifi if no network
         			{
@@ -516,21 +577,21 @@ public final class Launcher extends Activity
         			else
         			{
         				Log.i(TAG, "HAS_WIFI_CONFIGURATION_BEEN_ASKED is true or any network is connected or connecting");
-        			}      	
-				} 
+        			}
+				}
 				catch(Exception e)
 				{
-					Log.e(TAG,e.getMessage());					
+					Log.e(TAG,e.getMessage());
 				}
         	}
         	else
         	{
         		Log.i(TAG, LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME + "  exists. ");
         	}
-				        			
-    	}//end try 
+
+    	}//end try
 		catch(Exception e){
-			Log.e(TAG,e.getMessage());						
+			Log.e(TAG,e.getMessage());
 		}
 		finally
 		{
@@ -540,18 +601,129 @@ public final class Launcher extends Activity
 				{
 					fos.flush();
 					fos.close();
-				} 
+				}
 				catch (IOException e)
 				{
-					Log.e(TAG,e.getMessage());		
+					Log.e(TAG,e.getMessage());
 				}
 			}
 		}//end finally
     }
-*/
-   /*  private void SetBootingAfterWipeToFalse()
+
+    private Boolean RestoreMasterOrSlaveConfiguration()
     {
-    	releaseWakeLock();  
+    	Log.i(TAG, "In RestoreMasterOrSlaveConfiguration()");
+    	Boolean isdeviceAmaster=false;
+    	Boolean isdeviceMasterOrSlaveConfigured = false;
+
+    	SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
+		//is there a master config file under
+    	//sdcard/admin/master/
+    	try
+    	{
+    		//is there a file in the path /sdcard/admin/master/clone.db
+        	File cloneFile = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/master/shared_prefs/","master_config_preferences.xml");
+        	if (cloneFile.exists() && !m_pendingCloning)
+        	{
+        		isdeviceAmaster = true;
+        		Log.i(TAG,"Master clone config file found");
+    			String l_masterConfigString="";
+				try {
+					l_masterConfigString = getStringFromFile(cloneFile.getPath());
+				}
+				catch (Exception e) {
+					Log.e(TAG, "Error in reading file slave_config_preferences.xml");
+					Log.e(TAG, e.getMessage());
+				}
+
+				try
+				{
+					// Call the config master activity
+					Intent intent = new Intent("android.intent.action.CONFIG_MASTER_SWIPE");
+					intent.addFlags(
+	                        Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+					intent.putExtra("ACTION", "silent");
+					intent.putExtra("com.pdiarm.clone.PREFERENCES_FILE",l_masterConfigString);
+					startActivityForResult(intent, REQUEST_CODE_CLONE_MASTER);
+					m_pendingCloning = true;
+	        		isdeviceMasterOrSlaveConfigured = true;
+					Log.i(TAG,"Request to clone for master has been sent");
+				}
+				catch(Exception e)
+				{
+					Log.e(TAG,"Exception in starting activity for cloning slave, will not retry");
+					Log.e(TAG, e.getMessage());
+				}
+        	}
+        	else
+        	{
+        		Log.i(TAG,"Master config file does not exist at " + Environment.getExternalStorageDirectory().getPath() + "/admin/master/shared_prefs/" +"master_config_preferences.xml");
+        	}
+    	}
+		catch(Exception e){
+			showToast(e.getMessage());
+			Log.e(this.getClass().getSimpleName(),e.getMessage());
+		}
+
+    	//else is there a slave config file under sdcard/admin/slave/shared_prefs
+    	//** else because we do not want to do this for a master
+    	if(!isdeviceAmaster)
+    	{
+    		Log.i(TAG, "This device is not a master");
+        	try
+        	{
+        		//is there a file in the path /sdcard/admin/slave/shared_prefs/slave_config_preferences.xml
+	        	File cloneFile = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/slave/shared_prefs","slave_config_preferences.xml");
+	        	if (cloneFile.exists() && !m_pendingCloning)
+	        	{
+	        			Log.i(TAG,"slave clone config file found");
+	        			String l_slaveConfigString="";
+						try {
+							l_slaveConfigString = getStringFromFile(cloneFile.getPath());
+						}
+						catch (Exception e) {
+							Log.e(TAG, "Error in reading file slave_config_preferences.xml");
+							Log.e(TAG, e.getMessage());
+						}
+
+						try
+						{
+							// Call the config slave activity
+        					Intent intent = new Intent("android.intent.action.CONFIG_SLAVE");
+        					intent.addFlags(
+        	                        Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        					intent.putExtra("ACTION", "silent");
+        					intent.putExtra("com.pdiarm.cloneslave.PREFERENCES_FILE",l_slaveConfigString);
+        					startActivityForResult(intent, REQUEST_CODE_CLONE_SLAVE);
+        					m_pendingCloning = true;
+        	        		isdeviceMasterOrSlaveConfigured = true;
+        					Log.i(TAG,"Request to clone for slave has been sent");
+
+        					//do not let the device sleep when cloning
+        					acquirePartialWakeLock();
+						}
+						catch(Exception e)
+						{
+							Log.e(TAG,"Exception in starting activity for cloning slave, will not retry");
+							Log.e(TAG, e.getMessage());
+						}
+	        	}
+	        	else
+	        	{
+	        		Log.i(TAG,"Slave config file does not exist at " + Environment.getExternalStorageDirectory().getPath() + "/admin/slave/shared_prefs" + "slave_config_preferences.xml" + " OR a cloning request is pending");
+	        	}
+        	}
+			catch(Exception e){
+				showToast(e.getMessage());
+				Log.e(TAG,e.getMessage());
+			}
+    	}
+    	return isdeviceMasterOrSlaveConfigured;
+    }
+
+    private void SetBootingAfterWipeToFalse()
+    {
+    	releaseWakeLock();
     	//releasePartialWakeLock(); //Why should we ever release a partial wake lock on the P14-Tab?
     	//set the prefs here - error or no error
 		SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
@@ -559,19 +731,19 @@ public final class Launcher extends Activity
 		editor.putBoolean(BOOTING_AFTER_WIPE_OR_FACTORY_RESET, false);
 		editor.commit();
 		Log.i(TAG,"BOOTING_AFTER_WIPE_OR_FACTORY_RESET has been set to false");
-		
+
 		//Restore Time zone - Start
 		try {
-			File timezoneFile = new File(Environment.getExternalStorageDirectory().toString() + "/admin", "timezone.txt");		        	
+			File timezoneFile = new File(Environment.getExternalStorageDirectory().toString() + "/admin", "timezone.txt");
 			if (timezoneFile.exists()) {
-				
+
 				String xtimezone = getStringFromFile(timezoneFile.getPath());
 				Log.i(TAG, "The timezone string is " + xtimezone);
-				
-				String timezone = RemoveBackSlashN(xtimezone);				
+
+				String timezone = RemoveBackSlashN(xtimezone);
 				AlarmManager am = (AlarmManager)(this.getSystemService( Context.ALARM_SERVICE ));
 				am.setTimeZone(timezone);
-				
+
 				/*String[] list = TimeZone.getAvailableIDs();
 				for (String w : list) {
 					Log.i(TAG, "Available ids are:" + w );
@@ -580,23 +752,23 @@ public final class Launcher extends Activity
 						Log.i(TAG, "ID matches with:" + w );
 						break;
 					}
-					else						
+					else
 						Log.e(TAG, "ID did not match");
-				}					
-				
-				TimeZone myTimeZone = TimeZone.getTimeZone(timezone);										
-				Log.i(TAG, "The new timezone string from TimeZone is " + myTimeZone.getID());							
-				am.setTimeZone(myTimeZone.getID());										
+				}
+
+				TimeZone myTimeZone = TimeZone.getTimeZone(timezone);
+				Log.i(TAG, "The new timezone string from TimeZone is " + myTimeZone.getID());
+				am.setTimeZone(myTimeZone.getID());	*/
 			}
 		}
 		catch (Exception e) {
 			Log.e(TAG, "Exception in setting Time Zone");
 			if ((e != null) && (e.getMessage() != null))
-        		Log.e(TAG, e.getMessage());					
-		}				
+        		Log.e(TAG, e.getMessage());
+		}
 		//Restore Time Zone  - End
-    } 
-    */
+    }
+
     public String RemoveBackSlashN(String str) {
 		  if (str.length() > 0 && str.charAt(str.length()-1)=='\n') {
 		    str = str.substring(0, str.length()-1);
@@ -604,12 +776,12 @@ public final class Launcher extends Activity
 		  return str;
 		}
 
- /*   private void InvokeApplockerActivityIntent(String action)
+    private void InvokeApplockerActivityIntent(String action)
     {
-    	//Call to enable the applocker service here 
-    	//it has option to start automatically on boot  - so called only once under the booting for the first time flag  	
+    	//Call to enable the applocker service here
+    	//it has option to start automatically on boot  - so called only once under the booting for the first time flag
     	//Note: that if the service is running or values are set then the lock screen appears
-    	
+
     	if(!m_bHasApplockerActivityRequestBeenSent || !(isMyServiceRunning(APPLOCKER_SERVICE_NAME)))
     	{
     		Log.i(TAG,"m_bHasApplockerActivityRequestBeenSent is false");
@@ -620,36 +792,76 @@ public final class Launcher extends Activity
 	    		intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
 	            intent.putExtra("ACTION", action);
 	            m_bHasApplockerActivityRequestBeenSent = true;
-				startActivityForResult(intent, REQUEST_CODE_START_LOCK_SERVICE);				
+				startActivityForResult(intent, REQUEST_CODE_START_LOCK_SERVICE);
 				Log.i(TAG,"Request for start of locker service has been sent");
 				//startActivity(intent);
-			} 
+			}
 			catch(Exception e)
 			{
 				Log.i(TAG,"Exception in Request for start of locker service");
-				Log.e(TAG,e.getMessage());											
+				Log.e(TAG,e.getMessage());
 			}
     	}
     	else
     	{
     		Log.i(TAG,"m_bHasApplockerActivityRequestBeenSent is true - a service request has been sent or the app locker service is running");
     	}
-    	
-    } */
-     private void DismissCling(final String flag)
-    {  
+
+    }
+
+    private void DismissCling(final String flag)
+    {
     	SharedPreferences prefs = getSharedPreferences("com.android.launcher2.prefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean(flag, true);
         editor.commit();
-    } 
+    }
 
-   
+    private void EnableWifiIfNoNetwork()
+    {
+    	WifiManager wifiManager ;
+		wifiManager  = (WifiManager)getSystemService(WIFI_SERVICE);
+		//check if we are connected to any network
+		if (!isConnectedOrConnectingToAny(getApplicationContext()))
+		{
+			Log.i(TAG, "EnableWifiIfNoNetwork():Not connected to any network - implies ethernet is not present or wifi was not automatically enabled");
+			Log.i(TAG, "EnableWifiIfNoNetwork():Will setWifiEnabled to true");
+    		if(wifiManager.setWifiEnabled(true))
+    		{
+    			Log.i(TAG,"EnableWifiIfNoNetwork():setWifiEnabled has been set to true. Note that it may take while to connect to the network.");
+
+    		}
+    		else
+    		{
+    			Log.e(TAG,"EnableWifiIfNoNetwork():wifiManager.setWifiEnabled(true) returned false - could not enable wifi");
+    		}
+		}
+		else
+		{
+			Log.i(TAG, "EnableWifiIfNoNetwork():Connected to any network - implies ethernet is present or wifi was restored on reboot");
+			Log.i(TAG, "EnableWifiIfNoNetwork():Will not call setWifiEnabled to true");
+		}
+
+    }
+
+    private boolean isMyServiceRunning(String serviceName) {
+	    ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+	    for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+	    	Log.i(TAG,"Services running are : " + service.service.getClassName());
+	        if (serviceName.equals(service.service.getClassName())) {
+	        	Log.i(TAG, serviceName + "  service has been found to be running");
+	            return true;
+	        }
+	    }
+	    Log.i(TAG,"The service " + serviceName + " is not running");
+	    return false;
+	}
+
     private void acquireWakeLock() {
     	fullWakeLock.acquire();
     	Log.i(TAG, "A full wakelock was acquired");
     }
-    
+
     private void releaseWakeLock() {
     	// sanity check for null
         if (fullWakeLock != null) {
@@ -664,12 +876,16 @@ public final class Launcher extends Activity
             Log.e(TAG, "Wakelock reference is null");
         }
     }
-    
+
     private void acquirePartialWakeLock() {
-    	partialWakeLock.acquire();  
-    	Log.i(TAG, "A partial wakelock was acquired");
+      if (!partialWakeLock.isHeld()) {
+        partialWakeLock.acquire();
+      }
+      else {
+        Log.i(TAG, "A partial wakelock is already held");
+      }
     }
-    
+
     private void releasePartialWakeLock() {
     	// sanity check for null
         if (partialWakeLock != null) {
@@ -686,7 +902,7 @@ public final class Launcher extends Activity
     }
 
     private String getDataDir() {
-    	
+
     	PackageManager m = getPackageManager();
     	String s = getPackageName();
     	String dataDir=null;
@@ -698,9 +914,9 @@ public final class Launcher extends Activity
     	}
     	return dataDir;
     }
-    
+
     private void CopyLauncherDataForNewUser()	{
-		
+
     	String dataDir = getDataDir();
 		try {
 			File fs = new File("/data/data/com.android.launcher/databases/launcher.db"); //admin user
@@ -712,12 +928,12 @@ public final class Launcher extends Activity
 				//non admin user
 				Utils.copyDirectoryOneLocationToAnotherLocationNoAdmin(fs, fd) ;
 			}
-		} 
+		}
         catch (FileNotFoundException e) {
         	if ((e != null) && (e.getMessage() != null))
         		Log.e(TAG, e.getMessage());
         	Log.e(TAG, "FileNotFoundException ");
-        }        
+        }
         catch (IOException e) {
         	if ((e != null) && (e.getMessage() != null))
         		Log.e(TAG, e.getMessage());
@@ -726,36 +942,33 @@ public final class Launcher extends Activity
         //catch(Exception e)  {
         //	Log.e(TAG, e.getMessage());
         //}
-		
+
 	}
-    
+
     private void CopySDcardDataFromAdmin(){
-    	
+
     	String dataDir = getDataDir();
-    	
+
     	try {
 			File fs = new File("/data/data/com.android.launcher/databases/launcher.db");
-			File fd = new File(dataDir); 
+			File fd = new File(dataDir);
 			//File fd = new File("/data/user/" + newUserIdString + "/com.android.launcher/databases/launcher.db"  );
-			Utils.copyDirectoryOneLocationToAnotherLocationNoAdmin(fs, fd) ; 			
-		} 
+			Utils.copyDirectoryOneLocationToAnotherLocationNoAdmin(fs, fd) ;
+		}
         catch (FileNotFoundException e) {
         	if ((e != null) && (e.getMessage() != null))
         		Log.e(TAG, e.getMessage());
         	Log.e(TAG, "FileNotFoundException ");
-        }        
+        }
         catch (IOException e) {
         	if ((e != null) && (e.getMessage() != null))
         		Log.e(TAG, e.getMessage());
         	Log.e(TAG, "IOException ");
         }
-    	
+
     }
-    
-    //End - Pdi Declaration	
 
-
-
+    //End - Pdi Declaration
 
     private HideFromAccessibilityHelper mHideFromAccessibilityHelper
         = new HideFromAccessibilityHelper();
@@ -829,25 +1042,25 @@ public final class Launcher extends Activity
         //Start - PDi Changes
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         fullWakeLock = powerManager.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "Launcher - FULL WAKE LOCK");
-        
-        //Wake lock level: Ensures that the CPU is running; the screen and keyboard backlight will be allowed to go off. 
+
+        //Wake lock level: Ensures that the CPU is running; the screen and keyboard backlight will be allowed to go off.
         partialWakeLock = powerManager.newWakeLock((PowerManager. PARTIAL_WAKE_LOCK), "Launcher - Partial WAKE LOCK");
         //Acquire Partial Wakelock
-        acquirePartialWakeLock();        
-        
+        acquirePartialWakeLock();
+
         //Start - adds for overscan hard coded fix
         //mDisplayManager = (DisplayManager)getSystemService(Context.DISPLAYMANAGER_SERVICE);
-        //for(int i=0; i<MAX_DISPLAY_DEVICE; i++ ) {                        
-        //    mDisplayManager.setDisplayXOverScan(i, 4);                   
+        //for(int i=0; i<MAX_DISPLAY_DEVICE; i++ ) {
+        //    mDisplayManager.setDisplayXOverScan(i, 4);
         //    mDisplayManager.setDisplayYOverScan(i, 6);
         //}
-        //End - adds for overscan hard coded fix 
-        
+        //End - adds for overscan hard coded fix
+
         //Start - Do not show clings
         //DismissCling(Cling.WORKSPACE_CLING_DISMISSED_KEY); //-- TODO: not refreshed
         DismissCling(Cling.ALLAPPS_CLING_DISMISSED_KEY);
         DismissCling(Cling.FOLDER_CLING_DISMISSED_KEY);
-        
+
         //create the database dir and share it
         String dataDir = getDataDir();
         File localDirPath = new File(dataDir + "/databases/");
@@ -855,16 +1068,16 @@ public final class Launcher extends Activity
 				localDirPath.mkdirs();
     	localDirPath.setReadable(true, false);
     	localDirPath.setWritable(true, false);
-    	
+
     	SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
     	Boolean l_IsBootingAfterWipeOrFactoryReset = prefs.getBoolean(BOOTING_AFTER_WIPE_OR_FACTORY_RESET, true);
 		if(l_IsBootingAfterWipeOrFactoryReset)	{
-			CopyLauncherDataForNewUser();	
+			CopyLauncherDataForNewUser();
 		}
-    	
+
         //End - Do not show clings
-        
-        //End - PDi Changes        
+
+        //End - PDi Changes
 
         checkForLocaleChange();
         setContentView(R.layout.launcher);
@@ -1111,15 +1324,16 @@ public final class Launcher extends Activity
     @Override
     protected void onActivityResult(
             final int requestCode, final int resultCode, final Intent data) {
+
 		//Start - PDi Addition
-        if (requestCode == REQUEST_CODE_CHOOSE_PASSWORD) 
-        {	
+        if (requestCode == REQUEST_CODE_CHOOSE_PASSWORD)
+        {
         	if (resultCode == RESULT_OK)
-        	{  
+        	{
         		String param_password="";
         		Bundle extras = data.getExtras();
         		if(extras !=null) {
-        		    param_password = extras.getString("PASSWORD");//NOTE: getString returns NULL		    
+        		    param_password = extras.getString("PASSWORD");//NOTE: getString returns NULL
         		}
         		//check the password for set - not necessary
         		if ((param_password != null) && ( param_password.compareTo("SET") == 0))
@@ -1127,82 +1341,200 @@ public final class Launcher extends Activity
         			SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
         			Editor editor = prefs.edit();
         		    editor.putBoolean(PASSWORD_HAS_BEEN_SET, true);
-        		    editor.commit();        		
-        		}       		
-        	}        	
+        		    editor.commit();
+        		}
+        	}
+            /* after uses sets the password, unit needs to lock
+               ; otherwise, it won't happen until reboot or the screen
+               is turned off and back on -- mrobbeloth PDi */
+            releaseWakeLock();
             return;
         }
-
-        if (requestCode == REQUEST_RESTORE_WIFI) 
-        {	
+        if (requestCode == REQUEST_RESTORE_WIFI)
+        {
         	Boolean l_isdeviceMasterOrSlaveConfiguredCalled = false;
         	Log.i(TAG, "requestCode == REQUEST_RESTORE_WIFI");
         	if (resultCode == RESULT_OK)
-        	{ 
+        	{
         		Log.i(TAG, "resultCode == RESULT_OK from REQUEST_RESTORE_WIFI");
         		//check for wifi restore
         		String param_file="";
         		Bundle extras = data.getExtras();
         		if(extras !=null) {
-        			param_file = extras.getString("FILE");//NOTE: getString returns NULL		    
+        			param_file = extras.getString("FILE");//NOTE: getString returns NULL
         		}
         		if ((param_file != null) && (param_file.compareTo("SAVED") == 0))
-        		{  
-        			Log.i(TAG, "Extras from returnresult says that wifi file was saved");        			
+        		{
+        			Log.i(TAG, "Extras from returnresult says that wifi file was saved");
 			    	WifiManager wifiManager ;
 		    		wifiManager  = (WifiManager)getSystemService(WIFI_SERVICE);
 		    		//check if we are connected to any network
 		    		if (!isConnectedOrConnectingToAny(getApplicationContext()))
 		    		{
-		    			Log.i(TAG, "Not connected to any network - implies ethernet is not present"); 
-		    			Log.i(TAG, "Will setWifiEnabled to true");		    				    		
+		    			Log.i(TAG, "Not connected to any network - implies ethernet is not present");
+		    			Log.i(TAG, "Will setWifiEnabled to true");
 			    		if(wifiManager.setWifiEnabled(true))
 			    		{
 			    			Log.i(TAG,"setWifiEnabled has been set to true. Note that it may take while to connect to the network.");
-			    			
+
 			    			/*Intent updateWidgetIntent = new Intent();
 							updateWidgetIntent.setComponent(new ComponentName("org.androidappdev.wifiwidget","org.androidappdev.wifiwidget.WifiAppWidgetProvider"));
 							updateWidgetIntent.setAction("com.android.launcher.restorewifi");
 							getApplicationContext().sendBroadcast(updateWidgetIntent);
 							Log.i(TAG,"A wifi widget request has also been sent");*/
-			    		}		    				    	
+			    		}
 			    		else
 			    		{
-			    			Log.e(TAG,"wifiManager.setWifiEnabled(true) returned false - could not enable wifi");			    			
-			    		}		    					    		
+			    			Log.e(TAG,"wifiManager.setWifiEnabled(true) returned false - could not enable wifi");
+			    		}
         			}
 	        		else
 	        		{
-	        			Log.i(TAG, "Connected to any network - implies ethernet is present"); 
-		    			Log.i(TAG, "Will not call setWifiEnabled to true");	
-	        		}       			
-        		}  
+	        			Log.i(TAG, "Connected to any network - implies ethernet is present");
+		    			Log.i(TAG, "Will not call setWifiEnabled to true");
+	        		}
+        		}
         		else
         			Log.e(TAG, "REQUEST_RESTORE_WIFI returned RESULT_OK but extras not set ");
-        	} 
+        	}
         	else
         		Log.e(TAG, "Result code is not OK for request restore wifi");
-        	
-    		
+
+
 			//In all cases call the restore function
 			//will try to invoke RestoreMasterOrSlaveConfiguration anyways - so that backup file can be used
 			Log.i(TAG,"Calling function RestoreMasterOrSlaveConfiguration");
-			l_isdeviceMasterOrSlaveConfiguredCalled = RestoreMasterOrSlaveConfiguration();		
+			l_isdeviceMasterOrSlaveConfiguredCalled = RestoreMasterOrSlaveConfiguration();
 
-        	
+
         	if (!l_isdeviceMasterOrSlaveConfiguredCalled)
         	{
         		Log.i(TAG, "RestoreMasterOrSlaveConfiguration() could not be called or returned false. ");
         		SetBootingAfterWipeToFalse();
         	}
-        	
-        	//on any result, set the m_pendingWifiRestoration to false to attempt retries  		    
-		    //m_pendingWifiRestoration = false; - cannot do this - on activity cancelled this flag is set to false and we start to loop        	
+
+        	//on any result, set the m_pendingWifiRestoration to false to attempt retries
+		    //m_pendingWifiRestoration = false; - cannot do this - on activity cancelled this flag is set to false and we start to loop
             return;
-        } 
+        }
+        if (requestCode == REQUEST_CODE_CLONE_SLAVE)
+        {
+        	Log.i(TAG, "requestCode == REQUEST_CODE_CLONE_SLAVE");
+        	if (resultCode == RESULT_OK)
+        	{
+        		Log.i(TAG, "resultCode == RESULT_OK from REQUEST_CODE_CLONE_SLAVE");
+        		m_pendingCloning = false;
 
+        		String param_slave="";
+        		Bundle extras = data.getExtras();
+        		if(extras !=null) {
+        			param_slave = extras.getString("SLAVE");//NOTE: getString returns NULL
+        		}
+        		//check for cloning done
+        		if ((param_slave != null) && ( param_slave.compareTo("SET") == 0))
+        		{
+        			Log.i(TAG, "Slave Clone returned SET");
+        			//TODO
+	        		//if the wifi backup file is present
+		        	//append that information to the wpa_supplicant.conf file
+        			//then delete the wifi file
+        			synchronized(m_wifi_bk_file_Lock)
+					{
+        				File wifiFile = new File(Environment.getExternalStorageDirectory().toString() + WIFI_BACKUP_RELATIVE_PATH, WIFI_BACKUP_FILE);
+				    	if (wifiFile.exists() )
+				    	{
+				    		//rahul - do not delete now
+				    		//if (!wifiFile.delete())
+				    		//	Log.e(this.getClass().getSimpleName(),"Could not delete wifi backup file");
+				    		//else
+				    		//	Log.i(this.getClass().getSimpleName(),"wifi file deleted");
+				    	}
+					}
 
-         
+        		}
+        		//check for cloning not done due to some error
+        		if ((param_slave != null) && (param_slave.compareTo("NOT_SET") == 0))
+        		{
+        			Log.e(TAG, "Cloning (Slave) returned error - see earlier logs for more details.");
+        		}
+
+        	}
+        	else
+        	{
+        		Log.e(TAG, "resultCode != RESULT_OK from REQUEST_CODE_CLONE_SLAVE");
+        	}
+
+    		//set the prefs here - error or no error
+    		SetBootingAfterWipeToFalse();
+
+    		//attempt to start the locker service just once
+    		//TODO: on result is not called
+    		if(!isMyServiceRunning(APPLOCKER_SERVICE_NAME))
+    		{
+    			Log.i(TAG, "Locker Service isn't running , starting ...");
+    			InvokeApplockerActivityIntent("startservicekeepparams");
+    		}
+    		else
+    		{
+    			Log.i(TAG, "Locker Service is already running");
+    		}
+            return;
+        }
+
+        if (requestCode == REQUEST_CODE_CLONE_MASTER)
+        {
+        	Log.i(TAG, "requestCode == REQUEST_CODE_CLONE_MASTER");
+        	if (resultCode == RESULT_OK)
+        	{
+        		Log.i(TAG, "resultCode == RESULT_OK from REQUEST_CODE_CLONE_MASTER");
+        		m_pendingCloning = false;
+
+        		String param_master="";
+        		Bundle extras = data.getExtras();
+        		if(extras !=null) {
+        			param_master = extras.getString("MASTER");//NOTE: getString returns NULL
+        		}
+        		//check for cloning done
+        		if ((param_master != null) && (param_master.compareTo("SET") == 0))
+        		{
+        			Log.i(TAG, "Master Clone returned SET");
+        			//TODO
+
+	        		//if the wifi backup file is present
+		        	//append that information to the wpa_supplicant.conf file
+        			//then delete the wifi file
+        			synchronized(m_wifi_bk_file_Lock)
+					{
+        				File wifiFile = new File(Environment.getExternalStorageDirectory().toString() + WIFI_BACKUP_RELATIVE_PATH, WIFI_BACKUP_FILE);
+				    	if (wifiFile.exists() )
+				    	{
+				    		//rahul - do not delete now
+				    		//if (!wifiFile.delete())
+				    		//	Log.e(this.getClass().getSimpleName(),"Could not delete wifi backup file");
+				    		//else
+				    		//	Log.i(this.getClass().getSimpleName(),"wifi file deleted");
+				    	}
+					}
+        		}
+        		//check for cloning not done due to some error
+        		if ((param_master != null) && ( param_master.compareTo("NOT_SET") == 0))
+        		{
+        			Log.e(TAG, "Cloning (Master) returned error - see earlier logs for more details.");
+        		}
+
+        	}
+        	else
+        	{
+        		Log.e(TAG, "resultCode != RESULT_OK from REQUEST_CODE_CLONE_MASTER");
+        	}
+
+    		//set the prefs here - error or no error
+    		SetBootingAfterWipeToFalse();
+
+            return;
+        }
+
+        //End - PDi Addition
 
         if (requestCode == REQUEST_BIND_APPWIDGET) {
             int appWidgetId = data != null ?
@@ -1221,11 +1553,11 @@ public final class Launcher extends Activity
 
         // We have special handling for widgets
         if (isWidgetDrop) {
-          //  final int appWidgetId;
-            int appWidgetId = data != null ? data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-                    : -1;
+            int appWidgetId = data != null ?
+                    data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) : -1;
             if (appWidgetId < 0) {
-                Log.e(TAG,"Error: appWidgetId(EXTRA_APPWIDGET_ID) was not returned from the \\" +"widget configuration activity.");
+                Log.e(TAG, "Error: appWidgetId (EXTRA_APPWIDGET_ID) was not returned from the \\" +
+                        "widget configuration activity.");
                 completeTwoStageWidgetDrop(RESULT_CANCELED, appWidgetId);
             } else {
                 completeTwoStageWidgetDrop(resultCode, appWidgetId);
@@ -1280,7 +1612,6 @@ public final class Launcher extends Activity
                 }
             };
         } else if (resultCode == RESULT_CANCELED) {
-            mAppWidgetHost.deleteAppWidgetId(appWidgetId);
             animationType = Workspace.CANCEL_TWO_STAGE_WIDGET_DROP_ANIMATION;
             onCompleteRunnable = new Runnable() {
                 @Override
@@ -1319,26 +1650,109 @@ public final class Launcher extends Activity
             startTime = System.currentTimeMillis();
         }
         super.onResume();
-           //Start - PDi Additions
+
+		////////////////////////////////////////////////////
+		//Start - PDi Additions
 		SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
 		Boolean l_PasswordHasBeenSet = prefs.getBoolean(PASSWORD_HAS_BEEN_SET, false);
-		
+
 		//the PASSWORD_HAS_BEEN_SET pref flag will be set to true in onActivityresult function
 		if(!l_PasswordHasBeenSet)
 		{
-			SetPasswordFunction();	
+			SetPasswordFunction();
 			acquireWakeLock();
-		}	   							
-		//End - PDi Addition
+		}
+		//the launcher continues after starting the intent
+		if(l_PasswordHasBeenSet) // do these only if the password has been set
+		{
+			//determine whether booting after a wipe user data - factory reset
+			Boolean l_IsBootingAfterWipeOrFactoryReset = prefs.getBoolean(BOOTING_AFTER_WIPE_OR_FACTORY_RESET, true);
+			if(l_IsBootingAfterWipeOrFactoryReset)
+			{
+				if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+					Log.i(TAG, "BOOTING_AFTER_WIPE_OR_FACTORY_RESET flag is true, will call CopyLastKnownWifiData");
+					Boolean isdeviceMasterOrSlaveConfigured = false;
+
+					Boolean wasWifiREquestSent = CopyLastKnownWifiData();
+					//a false returned if wifi file not present or error in sending wifi request
+					//wil return true if an earlier request is pending
+					if(!wasWifiREquestSent) // wifi request was not sent
+					{
+						//No wifi file or error in restore wifi - but do we have an ethernet connection?
+						Log.i(TAG, "CopyLastKnownWifiData returned false - no previous wifi data or error in restore wifi");
+						if(isConnectedOrConnectingToAny(getApplicationContext())) // see if there is any other connection - ethernet?
+						{
+							Log.i(TAG, "Network is available, will invoke RestoreMasterOrSlaveConfiguration");
+						}
+						else
+						{
+							Log.i(TAG, "Network is not available, will still invoke RestoreMasterOrSlaveConfiguration");
+						}
+
+						Log.i(TAG, "Calling the RestoreMasterOrSlaveConfiguration()");
+						isdeviceMasterOrSlaveConfigured = RestoreMasterOrSlaveConfiguration();
+
+						//We are in wifi request not sent. Check if isdeviceMasterOrSlaveConfigured is false ( either file were not present or some error in invocation
+						//This device may be booting up for the first time OR after a complete factory reset OR after a wipe user data but no master/slave set
+						if (isdeviceMasterOrSlaveConfigured == false)
+						{
+							Log.i(TAG, "Calling AskToConfigureWifi()");
+							AskToConfigureWifi();
+							SetBootingAfterWipeToFalse();
+						}
+						else
+						{
+							Log.i(TAG, "isdeviceMasterOrSlaveConfigured is true, see related logs for details");
+						}
+					}
+					else
+					{
+						Log.i(TAG, "CopyLastKnownWifiData function returned true - this means wifi restore request was sent");
+						//in onActivityResult()- wifi started, cloning started
+					}
+
+					//attempt to start the locker service just once
+					if(!m_bHasApplockerActivityRequestBeenSent)
+					{
+						Log.i(TAG, "Resumer says app locker request has not been sent, now calling function InvokeApplockerActivityIntent(\"startservice\")");
+						InvokeApplockerActivityIntent("startservice");
+					}
+					else
+						Log.i(TAG, "Resumer says app locker request has been sent");
+				}
+		    	else { //for all newer versions
+		    		//CopyLauncherDataForNewUser();
+		    		//DoDeleteOldAndCreateNewUserTasks();
+		    	}
+
+			}
+			else
+			{
+				Log.i(TAG, "BOOTING_AFTER_WIPE_OR_FACTORY_RESET is false");
+				releaseWakeLock();
+				//Device restarted/unlocked - continue with Launcher
+			}
+
+			//explictly call the DismissCling - but does not work
+			DismissCling(Cling.WORKSPACE_CLING_DISMISSED_KEY);
+
+		}
+		//End - PDi Additions
+		///////////////////////////////////////////////////
+
+
+        // Restore the previous launcher state
         if (mOnResumeState == State.WORKSPACE) {
             showWorkspace(false);
         } else if (mOnResumeState == State.APPS_CUSTOMIZE) {
             showAllApps(false);
         }
         mOnResumeState = State.NONE;
-       // Background was set to gradient in onPause(), restore to black if in all apps.
+
+        // Background was set to gradient in onPause(), restore to black if in all apps.
         setWorkspaceBackground(mState == State.WORKSPACE);
- // Process any items that were added while Launcher was away
+
+        // Process any items that were added while Launcher was away
         InstallShortcutReceiver.flushInstallQueue(this);
 
         mPaused = false;
@@ -1405,17 +1819,16 @@ public final class Launcher extends Activity
         updateWallpaperVisibility(true);
 
         super.onPause();
-        
+        mPaused = true;
+        mDragController.cancelDrag();
+        mDragController.resetLastGestureUpTime();
+
         String dataDir = getDataDir();
         File localDirPath = new File(dataDir + "/databases/");
         if(!localDirPath.isDirectory())
 				localDirPath.mkdirs();
 		File dbfile = new File( dataDir + "/databases/" , "launcher.db");
 		dbfile.setReadable(true, false);
-        
-        mPaused = true;
-        mDragController.cancelDrag();
-        mDragController.resetLastGestureUpTime();
     }
 
     @Override
@@ -1539,7 +1952,6 @@ public final class Launcher extends Activity
             mPendingAddInfo.spanX = savedState.getInt(RUNTIME_STATE_PENDING_ADD_SPAN_X);
             mPendingAddInfo.spanY = savedState.getInt(RUNTIME_STATE_PENDING_ADD_SPAN_Y);
             mPendingAddWidgetInfo = savedState.getParcelable(RUNTIME_STATE_PENDING_ADD_WIDGET_INFO);
-            mPendingAddWidgetId = savedState.getInt(RUNTIME_STATE_PENDING_ADD_WIDGET_ID);
             mWaitingForResult = true;
             mRestoring = true;
         }
@@ -1667,9 +2079,8 @@ public final class Launcher extends Activity
         final ShortcutInfo info = mModel.getShortcutInfo(getPackageManager(), data, this);
 
         if (info != null) {
-            // Necessary flags are added when the activity is launched via
-            // LauncherApps
-            info.setActivity(data);
+            info.setActivity(data.getComponent(), Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
             info.container = ItemInfo.NO_ID;
             mWorkspace.addApplicationShortcut(info, layout, container, screen, cellXY[0], cellXY[1],
                     isWorkspaceLocked(), cellX, cellY);
@@ -1755,13 +2166,12 @@ public final class Launcher extends Activity
     }
 
     static int[] getSpanForWidget(Context context, PendingAddWidgetInfo info) {
-        return getSpanForWidget(context, info.componentName, info.info.minWidth,
-                info.info.minHeight);
+        return getSpanForWidget(context, info.componentName, info.minWidth, info.minHeight);
     }
 
     static int[] getMinSpanForWidget(Context context, PendingAddWidgetInfo info) {
-        return getSpanForWidget(context, info.componentName, info.info.minResizeWidth,
-                info.info.minResizeHeight);
+        return getSpanForWidget(context, info.componentName, info.minResizeWidth,
+                info.minResizeHeight);
     }
 
     /**
@@ -1828,7 +2238,6 @@ public final class Launcher extends Activity
         launcherInfo.spanY = spanXY[1];
         launcherInfo.minSpanX = mPendingAddInfo.minSpanX;
         launcherInfo.minSpanY = mPendingAddInfo.minSpanY;
-        launcherInfo.user = appWidgetInfo.getProfile();
 
         LauncherModel.addItemToDatabase(this, launcherInfo,
                 container, screen, cellXY[0], cellXY[1], false);
@@ -1873,9 +2282,6 @@ public final class Launcher extends Activity
             } else if (Intent.ACTION_USER_PRESENT.equals(action)) {
                 mUserPresent = true;
                 updateRunning();
-            } else if (Intent.ACTION_MANAGED_PROFILE_ADDED.equals(action)
-                    || Intent.ACTION_MANAGED_PROFILE_REMOVED.equals(action)) {
-                getModel().forceReload();
             }
         }
     };
@@ -1888,8 +2294,6 @@ public final class Launcher extends Activity
         final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         filter.addAction(Intent.ACTION_USER_PRESENT);
-        filter.addAction(Intent.ACTION_MANAGED_PROFILE_ADDED);
-        filter.addAction(Intent.ACTION_MANAGED_PROFILE_REMOVED);
         registerReceiver(mReceiver, filter);
         FirstFrameAnimatorHelper.initializeDrawListener(getWindow().getDecorView());
         mAttached = true;
@@ -2140,7 +2544,6 @@ public final class Launcher extends Activity
             outState.putInt(RUNTIME_STATE_PENDING_ADD_SPAN_X, mPendingAddInfo.spanX);
             outState.putInt(RUNTIME_STATE_PENDING_ADD_SPAN_Y, mPendingAddInfo.spanY);
             outState.putParcelable(RUNTIME_STATE_PENDING_ADD_WIDGET_INFO, mPendingAddWidgetInfo);
-            outState.putInt(RUNTIME_STATE_PENDING_ADD_WIDGET_ID, mPendingAddWidgetId);
         }
 
         if (mFolderInfo != null && mWaitingForResult) {
@@ -2366,10 +2769,12 @@ public final class Launcher extends Activity
             AppWidgetProviderInfo appWidgetInfo) {
         if (appWidgetInfo.configure != null) {
             mPendingAddWidgetInfo = appWidgetInfo;
-            mPendingAddWidgetId = appWidgetId;
 
             // Launch over to configure widget, if needed
-            startAppWidgetConfigureActivitySafely(appWidgetId);
+            Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE);
+            intent.setComponent(appWidgetInfo.configure);
+            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+            startActivityForResultSafely(intent, REQUEST_CREATE_APPWIDGET);
         } else {
             // Otherwise just add it
             completeAddAppWidget(appWidgetId, info.container, info.screen, boundWidget,
@@ -2439,9 +2844,16 @@ public final class Launcher extends Activity
             // In this case, we either need to start an activity to get permission to bind
             // the widget, or we need to start an activity to configure the widget, or both.
             appWidgetId = getAppWidgetHost().allocateAppWidgetId();
+            Bundle options = info.bindOptions;
 
-            boolean success = mAppWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId,
-                    info.info.getProfile(), info.componentName, info.bindOptions);
+            boolean success = false;
+            if (options != null) {
+                success = mAppWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId,
+                        info.componentName, options);
+            } else {
+                success = mAppWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId,
+                        info.componentName);
+            }
             if (success) {
                 addAppWidgetImpl(appWidgetId, info, null, info.info);
             } else {
@@ -2449,8 +2861,6 @@ public final class Launcher extends Activity
                 Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_BIND);
                 intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
                 intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, info.componentName);
-                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE,
-                        info.info.getProfile());
                 // TODO: we need to make sure that this accounts for the options bundle.
                 // intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_OPTIONS, options);
                 startActivityForResult(intent, REQUEST_BIND_APPWIDGET);
@@ -2693,20 +3103,15 @@ public final class Launcher extends Activity
         }
     }
 
-    void startApplicationDetailsActivity(ComponentName componentName, UserHandle user) {
-        LauncherApps launcherApps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
-        try {
-            launcherApps.startAppDetailsActivity(componentName, user, null, null);
-        } catch (SecurityException e) {
-            Toast.makeText(this, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "Launcher does not have permission to launch settings");
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "Unable to launch settings");
-        }
+    void startApplicationDetailsActivity(ComponentName componentName) {
+        String packageName = componentName.getPackageName();
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null));
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+        startActivitySafely(null, intent, "startApplicationDetailsActivity");
     }
 
-    void startApplicationUninstallActivity(ApplicationInfo appInfo, UserHandle user) {
+    void startApplicationUninstallActivity(ApplicationInfo appInfo) {
         if ((appInfo.flags & ApplicationInfo.DOWNLOADED_FLAG) == 0) {
             // System applications cannot be installed. For now, show a toast explaining that.
             // We may give them the option of disabling apps this way.
@@ -2719,9 +3124,6 @@ public final class Launcher extends Activity
                     Intent.ACTION_DELETE, Uri.fromParts("package", packageName, className));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
                     Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-            if (user != null) {
-                intent.putExtra(Intent.EXTRA_USER, user);
-            }
             startActivity(intent);
         }
     }
@@ -2734,27 +3136,13 @@ public final class Launcher extends Activity
             // private contract between launcher and may be ignored in the future).
             boolean useLaunchAnimation = (v != null) &&
                     !intent.hasExtra(INTENT_EXTRA_IGNORE_LAUNCH_ANIMATION);
-            UserHandle user = (UserHandle) intent.getParcelableExtra(ApplicationInfo.EXTRA_PROFILE);
-            LauncherApps launcherApps = (LauncherApps)
-                    this.getSystemService(Context.LAUNCHER_APPS_SERVICE);
             if (useLaunchAnimation) {
                 ActivityOptions opts = ActivityOptions.makeScaleUpAnimation(v, 0, 0,
                         v.getMeasuredWidth(), v.getMeasuredHeight());
-                if (user == null || user.equals(android.os.Process.myUserHandle())) {
-                    // Could be launching some bookkeeping activity
-                    startActivity(intent, opts.toBundle());
-                } else {
-                    launcherApps.startMainActivity(intent.getComponent(), user,
-                            intent.getSourceBounds(),
-                            opts.toBundle());
-                }
+
+                startActivity(intent, opts.toBundle());
             } else {
-                if (user == null || user.equals(android.os.Process.myUserHandle())) {
-                    startActivity(intent);
-                } else {
-                    launcherApps.startMainActivity(intent.getComponent(), user,
-                            intent.getSourceBounds(), null);
-                }
+                startActivity(intent);
             }
             return true;
         } catch (SecurityException e) {
@@ -2776,15 +3164,6 @@ public final class Launcher extends Activity
             Log.e(TAG, "Unable to launch. tag=" + tag + " intent=" + intent, e);
         }
         return success;
-    }
-
-    void startAppWidgetConfigureActivitySafely(int appWidgetId) {
-        try {
-            mAppWidgetHost.startAppWidgetConfigureActivityForResult(this, appWidgetId, 0,
-                    REQUEST_CREATE_APPWIDGET, null);
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
-        }
     }
 
     void startActivityForResultSafely(Intent intent, int requestCode) {
@@ -4118,6 +4497,7 @@ public final class Launcher extends Activity
     public void bindAppWidget(final LauncherAppWidgetInfo item) {
         if (waitUntilResume(new Runnable() {
                 public void run() {
+                if (DEBUG_WIDGETS) { Log.d(TAG, "Binding widget " + item); }
                     bindAppWidget(item);
                 }
             })) {
@@ -4133,7 +4513,15 @@ public final class Launcher extends Activity
         final int appWidgetId = item.appWidgetId;
         final AppWidgetProviderInfo appWidgetInfo = mAppWidgetManager.getAppWidgetInfo(appWidgetId);
         if (DEBUG_WIDGETS) {
-            Log.d(TAG, "bindAppWidget: id=" + item.appWidgetId + " belongs to component " + appWidgetInfo.provider);
+         	if (appWidgetInfo != null) {
+                Log.d(TAG, "bindAppWidget: id=" + item.appWidgetId
+                        + " belongs to component " +
+                  	  ((appWidgetInfo.provider == null) ? " provider is null" : appWidgetInfo.provider));
+        	}
+        	else {
+                Log.d(TAG, "bindAppWidget: id=" + appWidgetId
+                        + " belongs to component n/a appWidgetInfo is null");
+        	}
         }
 
         item.hostView = mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo);
@@ -4384,7 +4772,7 @@ public final class Launcher extends Activity
      */
     public void bindComponentsRemoved(final ArrayList<String> packageNames,
                                       final ArrayList<ApplicationInfo> appInfos,
-            final boolean matchPackageNamesOnly) {
+                                      final boolean matchPackageNamesOnly) {
         if (waitUntilResume(new Runnable() {
             public void run() {
                 bindComponentsRemoved(packageNames, appInfos, matchPackageNamesOnly);
@@ -4503,11 +4891,6 @@ public final class Launcher extends Activity
             if (restrictions.getBoolean(UserManager.DISALLOW_MODIFY_ACCOUNTS, false)) {
                return false;
             }
-        }
-        // Check if the system has requested skipping of first-use hints.
-        if (Settings.Secure.getInt(getContentResolver(),
-                Settings.Secure.SKIP_FIRST_USE_HINTS, 0) == 1) {
-            return false;
         }
         return true;
     }

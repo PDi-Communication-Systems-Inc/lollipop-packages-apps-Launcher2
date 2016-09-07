@@ -3642,7 +3642,7 @@ public class Workspace extends SmoothPagedView
     // Removes ALL items that match a given package name, this is usually called when a package
     // has been removed and we want to remove all components (widgets, shortcuts, apps) that
     // belong to that package.
-    void removeItemsByPackageName(final ArrayList<String> packages, final UserHandle user) {
+    void removeItemsByPackageName(final ArrayList<String> packages) {
         HashSet<String> packageNames = new HashSet<String>();
         packageNames.addAll(packages);
 
@@ -3659,24 +3659,21 @@ public class Workspace extends SmoothPagedView
                 if (tag instanceof ShortcutInfo) {
                     ShortcutInfo info = (ShortcutInfo) tag;
                     ComponentName cn = info.intent.getComponent();
-                    if ((cn != null) && packageNames.contains(cn.getPackageName())
-                            && info.user.equals(user)) {
+                    if ((cn != null) && packageNames.contains(cn.getPackageName())) {
                         cns.add(cn);
                     }
                 } else if (tag instanceof FolderInfo) {
                     FolderInfo info = (FolderInfo) tag;
                     for (ShortcutInfo s : info.contents) {
                         ComponentName cn = s.intent.getComponent();
-                        if ((cn != null) && packageNames.contains(cn.getPackageName())
-                                && info.user.equals(user)) {
+                        if ((cn != null) && packageNames.contains(cn.getPackageName())) {
                             cns.add(cn);
                         }
                     }
                 } else if (tag instanceof LauncherAppWidgetInfo) {
                     LauncherAppWidgetInfo info = (LauncherAppWidgetInfo) tag;
                     ComponentName cn = info.providerName;
-                    if ((cn != null) && packageNames.contains(cn.getPackageName())
-                            && info.user.equals(user)) {
+                    if ((cn != null) && packageNames.contains(cn.getPackageName())) {
                         cns.add(cn);
                     }
                 }
@@ -3684,13 +3681,13 @@ public class Workspace extends SmoothPagedView
         }
 
         // Remove all the things
-        removeItemsByComponentName(cns, user);
+        removeItemsByComponentName(cns);
     }
 
     // Removes items that match the application info specified, when applications are removed
     // as a part of an update, this is called to ensure that other widgets and application
     // shortcuts are not removed.
-    void removeItemsByApplicationInfo(final ArrayList<ApplicationInfo> appInfos, UserHandle user) {
+    void removeItemsByApplicationInfo(final ArrayList<ApplicationInfo> appInfos) {
         // Just create a hash table of all the specific components that this will affect
         HashSet<ComponentName> cns = new HashSet<ComponentName>();
         for (ApplicationInfo info : appInfos) {
@@ -3698,11 +3695,10 @@ public class Workspace extends SmoothPagedView
         }
 
         // Remove all the things
-        removeItemsByComponentName(cns, user);
+        removeItemsByComponentName(cns);
     }
 
-    void removeItemsByComponentName(final HashSet<ComponentName> componentNames,
-            final UserHandle user) {
+    void removeItemsByComponentName(final HashSet<ComponentName> componentNames) {
         ArrayList<CellLayout> cellLayouts = getWorkspaceAndHotseatCellLayouts();
         for (final CellLayout layoutParent: cellLayouts) {
             final ViewGroup layout = layoutParent.getShortcutsAndWidgets();
@@ -3717,8 +3713,7 @@ public class Workspace extends SmoothPagedView
                     for (int j = 0; j < childCount; j++) {
                         final View view = layout.getChildAt(j);
                         Object tag = view.getTag();
-                        if ((tag instanceof ShortcutInfo || tag instanceof LauncherAppWidgetInfo)
-                                && !((ItemInfo) tag).user.equals(user)) {
+                        if ((tag instanceof ShortcutInfo || tag instanceof LauncherAppWidgetInfo)) {
                             continue;
                         }
                         if (tag instanceof ShortcutInfo) {
@@ -3745,8 +3740,7 @@ public class Workspace extends SmoothPagedView
                                 final ComponentName name = intent.getComponent();
 
                                 if (name != null) {
-                                    if (componentNames.contains(name)
-                                            && user.equals(appInfo.user)) {
+                                    if (componentNames.contains(name)) {
                                         appsToRemoveFromFolder.add(appInfo);
                                     }
                                 }
