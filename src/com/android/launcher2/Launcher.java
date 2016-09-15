@@ -1108,6 +1108,17 @@ public final class Launcher extends Activity
         return result;
     }
 
+    private static boolean isConnectedOrConnectingToAny(Context context) {
+        ConnectivityManager connectivityManager 
+              = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        
+        NetworkInfo activeNetworkInfo = null;
+        if (connectivityManager != null) {
+        activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        }
+        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
+    }
+
     @Override
     protected void onActivityResult(
             final int requestCode, final int resultCode, final Intent data) {
@@ -1187,22 +1198,19 @@ public final class Launcher extends Activity
 			//In all cases call the restore function
 			//will try to invoke RestoreMasterOrSlaveConfiguration anyways - so that backup file can be used
 			Log.i(TAG,"Calling function RestoreMasterOrSlaveConfiguration");
-			l_isdeviceMasterOrSlaveConfiguredCalled = RestoreMasterOrSlaveConfiguration();		
+	//		l_isdeviceMasterOrSlaveConfiguredCalled = RestoreMasterOrSlaveConfiguration();		
 
         	
-        	if (!l_isdeviceMasterOrSlaveConfiguredCalled)
+        /*	if (!l_isdeviceMasterOrSlaveConfiguredCalled)
         	{
         		Log.i(TAG, "RestoreMasterOrSlaveConfiguration() could not be called or returned false. ");
         		SetBootingAfterWipeToFalse();
-        	}
+        	} */
         	
         	//on any result, set the m_pendingWifiRestoration to false to attempt retries  		    
 		    //m_pendingWifiRestoration = false; - cannot do this - on activity cancelled this flag is set to false and we start to loop        	
             return;
         } 
-
-
-         
 
         if (requestCode == REQUEST_BIND_APPWIDGET) {
             int appWidgetId = data != null ?
