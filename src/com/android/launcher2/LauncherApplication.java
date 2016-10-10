@@ -28,6 +28,8 @@ import android.database.ContentObserver;
 import android.os.Handler;
 import android.util.Log;
 
+import android.app.StatusBarManager;
+
 import com.android.launcher.R;
 
 import java.lang.ref.WeakReference;
@@ -74,6 +76,12 @@ public class LauncherApplication extends Application {
         ContentResolver resolver = getContentResolver();
         resolver.registerContentObserver(LauncherSettings.Favorites.CONTENT_URI, true,
                 mFavoritesObserver);
+
+	StatusBarManager statusBarManager = 
+           (StatusBarManager) this.getSystemService("statusbar");
+	int state = StatusBarManager.DISABLE_EXPAND | StatusBarManager.DISABLE_RECENT | 
+		    StatusBarManager.DISABLE_HOME | StatusBarManager.DISABLE_BACK;
+        statusBarManager.disable(state);
     }
 
     public void recreateWidgetPreviewDb() {

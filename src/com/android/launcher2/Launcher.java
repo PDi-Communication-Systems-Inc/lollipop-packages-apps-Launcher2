@@ -340,7 +340,6 @@ public final class Launcher extends Activity
     private static final String PDI_PREFERENCES= "pdi_preferences";
     
     private static final int REQUEST_CODE_CHOOSE_PASSWORD = 31;
-    private static final String PASSWORD_HAS_BEEN_SET= "password_has_been_set";
     private static final String INTENT_FORCE_PASSWORD= "android.intent.action.FORCE_PASSWORD";
     
     private static final String BOOTING_AFTER_WIPE_OR_FACTORY_RESET= "booting_after_wipe_or_factory_reset";
@@ -363,15 +362,7 @@ public final class Launcher extends Activity
     private static final String HAS_WIFI_CONFIGURATION_BEEN_ASKED= "has_wifi_configuration_been_asked";    
     private static final String LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME= "lifetimewificonfigurationasked.txt";
 
-    
-
-        
-    //request code to start the applocker service
-    private static final int REQUEST_CODE_START_LOCK_SERVICE = 35;
-    private static boolean m_bHasApplockerActivityRequestBeenSent = false;
-    private static final String APPLOCKER_SERVICE_NAME = "com.gueei.applocker.DetectorService" ;
-  
-   //   one time wifi enable per reboot
+    //   one time wifi enable per reboot
     private static boolean m_hasOneTimeWifiEnabledBeenCalled = false;
     
     //Device goes to suspend on the Welcome screen
@@ -393,250 +384,17 @@ public final class Launcher extends Activity
 
     private void SetPasswordFunction()
     {
-    	try
-		{
-			// Call the force user password activity
-			Intent intent = new Intent(INTENT_FORCE_PASSWORD);
-			startActivityForResult(intent, REQUEST_CODE_CHOOSE_PASSWORD);
-			Log.i(TAG,"Request to choose password has been sent");	
-			//sleep for a second in this thread
-			//android.os.SystemClock.sleep(1000);
-		} 
-		catch(Exception e)
-		{
-			showToast(e.getMessage());						
-			Log.e(TAG,e.getMessage());											
-		}
+	return;
     }
-  /*  private Boolean CopyLastKnownWifiData()
-    {
-			///////////////////////////////////////////////////
-			//A wifi.bk file exists means this is a restart post a "i'm a new user button" 
-			//Once a new user has been created (ie if the password has been set) we'll save wifi again on "i'm a new user button" 
-			//So restore any wifi.bk data and
-			//Delete the file after restoring it - TODO
-    		//////////////////////////////////////////////////
-			if(m_pendingWifiRestoration == false)
-			{
-				Log.i(TAG, "m_pendingWifiRestoration is false , restoring wifi ...");
-				synchronized(m_wifi_bk_file_Lock)
-				{
-					File wifiFile = new File(Environment.getExternalStorageDirectory().toString() + WIFI_BACKUP_RELATIVE_PATH, WIFI_BACKUP_FILE);		        	
-					//the file would be deleted in onActivityresult function
-					if (wifiFile.exists() ) 
-					{
-						Log.i(TAG, "wifi backup file found on the sdcard");
-						String wifiString="" , base64Wifi="";
-						//read the file
-						try {
-							base64Wifi = getStringFromFile(wifiFile.getPath());
-							
-							byte [] array = Base64.decode(base64Wifi, Base64.DEFAULT);
-							String otherString = new String(array,"UTF8");									
-							wifiString = wifiString + otherString;																				
-						} 
-						catch (Exception e) {
-							Log.e(TAG, "Error in reading file wifi.bk");
-							Log.e(TAG, e.getMessage());
-						}
-						
-						try
-						{
-							Intent intent = new Intent();
-							intent.setComponent(new ComponentName(PACKAGE_RESTORE_DATA_TO_SYSTEM, COMPONENT_RESTORE_DATA_TO_SYSTEM));
-							//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-							//| Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS); -- result cancelled
-							intent.putExtra("DATA", wifiString);
-							intent.putExtra("ABSOLUTE_FOLDER_PATH", WIFI_RESTORE_PATH);
-							intent.putExtra("FILE_NAME", WIFI_RESTORE_FILE);
-							m_pendingWifiRestoration = true;
-							startActivityForResult(intent,REQUEST_RESTORE_WIFI);
-							Log.i(TAG, "Request to restore wifi has been sent");
-							return true;
-						}
-						catch(Exception e)
-						{
-						Log.e(TAG, e.getMessage());    			
-						}	
-					}
-				}
-			}
-			else
-			{
-				//consider doing FLAG_ACTIVITY_REORDER_TO_FRONT
-				return true; // a request is pending
-			}
-			
-			return false;
-    }
-   */ 
-  /*   private void AskToConfigureWifi()
-    {
-    	Log.i(TAG, "In AskToConfigureWifi ");
-    	SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
-    	//if this device has been powered on for the first time (or after a factory reset)
-		//Typically by an administrator - Ask about wifi setup
-		FileOutputStream fos = null;
-		try
-    	{
-    		//is there a file in the path /sdcard/admin/masterslaveconfigurationasked.txt
-        	//<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-        	File masterSlaveConfigAskedFile = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/",LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME);		        	
-        	if (!masterSlaveConfigAskedFile.exists()) {
-        		
-        		Log.i(TAG, LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME + " does not exist. ");
-        		//this device has been powered on for the first time (or after a factory reset)
-        		
-        		//create the admin folder
-        		File sdcardDirPath = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/");
-        		if(!sdcardDirPath.isDirectory())
-        			sdcardDirPath.mkdirs();
-        		
-        		File file = new File(Environment.getExternalStorageDirectory().getPath() + "/admin/" + LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME);
-        		file.createNewFile();
-        		fos = new FileOutputStream(file);
-        		fos.write("Admin OK!".getBytes());
-        		try
-				{
-        			//double check with a preference value
-        			mHasWifiCofigurationBeenAsked = prefs.getBoolean(HAS_WIFI_CONFIGURATION_BEEN_ASKED, false);	        			
-        			//Ask to configure the wifi if that is not enabled
-        			if ((!mHasWifiCofigurationBeenAsked) && !isConnectedOrConnectingToAny(getApplicationContext())) //only enable wifi if no network
-        			{
-        				Log.i(TAG, "HAS_WIFI_CONFIGURATION_BEEN_ASKED is false and any network is NOT connected or connecting to");
-        				//Note that IsBootingAfterWipeOrFactoryReset might still be true here if
-        				//the admin did a power off somewhere during the configuration
-        				//ask admin for wifi but just one time
-        				Editor editor = prefs.edit();
-            		    editor.putBoolean(HAS_WIFI_CONFIGURATION_BEEN_ASKED, true);
-            		    editor.commit();
-        				startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
-        				Log.i(TAG, "wifi settings activity started");
-        			}
-        			else
-        			{
-        				Log.i(TAG, "HAS_WIFI_CONFIGURATION_BEEN_ASKED is true or any network is connected or connecting");
-        			}      	
-				} 
-				catch(Exception e)
-				{
-					Log.e(TAG,e.getMessage());					
-				}
-        	}
-        	else
-        	{
-        		Log.i(TAG, LIFETIME_WIFI__CONFIGURATION_ASKED_FILENAME + "  exists. ");
-        	}
-				        			
-    	}//end try 
-		catch(Exception e){
-			Log.e(TAG,e.getMessage());						
-		}
-		finally
-		{
-			if (fos != null)
-			{
-				try
-				{
-					fos.flush();
-					fos.close();
-				} 
-				catch (IOException e)
-				{
-					Log.e(TAG,e.getMessage());		
-				}
-			}
-		}//end finally
-    }
-*/
-   /*  private void SetBootingAfterWipeToFalse()
-    {
-    	releaseWakeLock();  
-    	//releasePartialWakeLock(); //Why should we ever release a partial wake lock on the P14-Tab?
-    	//set the prefs here - error or no error
-		SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
-		Editor editor = prefs.edit();
-		editor.putBoolean(BOOTING_AFTER_WIPE_OR_FACTORY_RESET, false);
-		editor.commit();
-		Log.i(TAG,"BOOTING_AFTER_WIPE_OR_FACTORY_RESET has been set to false");
-		
-		//Restore Time zone - Start
-		try {
-			File timezoneFile = new File(Environment.getExternalStorageDirectory().toString() + "/admin", "timezone.txt");		        	
-			if (timezoneFile.exists()) {
-				
-				String xtimezone = getStringFromFile(timezoneFile.getPath());
-				Log.i(TAG, "The timezone string is " + xtimezone);
-				
-				String timezone = RemoveBackSlashN(xtimezone);				
-				AlarmManager am = (AlarmManager)(this.getSystemService( Context.ALARM_SERVICE ));
-				am.setTimeZone(timezone);
-				
-				/*String[] list = TimeZone.getAvailableIDs();
-				for (String w : list) {
-					Log.i(TAG, "Available ids are:" + w );
-					if(w.equals(timezone))
-					{
-						Log.i(TAG, "ID matches with:" + w );
-						break;
-					}
-					else						
-						Log.e(TAG, "ID did not match");
-				}					
-				
-				TimeZone myTimeZone = TimeZone.getTimeZone(timezone);										
-				Log.i(TAG, "The new timezone string from TimeZone is " + myTimeZone.getID());							
-				am.setTimeZone(myTimeZone.getID());										
-			}
-		}
-		catch (Exception e) {
-			Log.e(TAG, "Exception in setting Time Zone");
-			if ((e != null) && (e.getMessage() != null))
-        		Log.e(TAG, e.getMessage());					
-		}				
-		//Restore Time Zone  - End
-    } 
-    */
+
     public String RemoveBackSlashN(String str) {
 		  if (str.length() > 0 && str.charAt(str.length()-1)=='\n') {
 		    str = str.substring(0, str.length()-1);
 		  }
 		  return str;
-		}
+    }
 
- /*   private void InvokeApplockerActivityIntent(String action)
-    {
-    	//Call to enable the applocker service here 
-    	//it has option to start automatically on boot  - so called only once under the booting for the first time flag  	
-    	//Note: that if the service is running or values are set then the lock screen appears
-    	
-    	if(!m_bHasApplockerActivityRequestBeenSent || !(isMyServiceRunning(APPLOCKER_SERVICE_NAME)))
-    	{
-    		Log.i(TAG,"m_bHasApplockerActivityRequestBeenSent is false");
-	    	try
-			{
-		    	Intent intent = new Intent();
-	    		intent.setComponent(new ComponentName("com.gueei.applocker","com.gueei.applocker.AppLockerActivity"));
-	    		intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-	            intent.putExtra("ACTION", action);
-	            m_bHasApplockerActivityRequestBeenSent = true;
-				startActivityForResult(intent, REQUEST_CODE_START_LOCK_SERVICE);				
-				Log.i(TAG,"Request for start of locker service has been sent");
-				//startActivity(intent);
-			} 
-			catch(Exception e)
-			{
-				Log.i(TAG,"Exception in Request for start of locker service");
-				Log.e(TAG,e.getMessage());											
-			}
-    	}
-    	else
-    	{
-    		Log.i(TAG,"m_bHasApplockerActivityRequestBeenSent is true - a service request has been sent or the app locker service is running");
-    	}
-    	
-    } */
-     private void DismissCling(final String flag)
+    private void DismissCling(final String flag)
     {  
     	SharedPreferences prefs = getSharedPreferences("com.android.launcher2.prefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
@@ -1125,22 +883,6 @@ public final class Launcher extends Activity
 		//Start - PDi Addition
         if (requestCode == REQUEST_CODE_CHOOSE_PASSWORD) 
         {	
-        	if (resultCode == RESULT_OK)
-        	{  
-        		String param_password="";
-        		Bundle extras = data.getExtras();
-        		if(extras !=null) {
-        		    param_password = extras.getString("PASSWORD");//NOTE: getString returns NULL		    
-        		}
-        		//check the password for set - not necessary
-        		if ((param_password != null) && ( param_password.compareTo("SET") == 0))
-        		{
-        			SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
-        			Editor editor = prefs.edit();
-        		    editor.putBoolean(PASSWORD_HAS_BEEN_SET, true);
-        		    editor.commit();        		
-        		}       		
-        	}        	
             return;
         }
 
@@ -1322,31 +1064,20 @@ public final class Launcher extends Activity
 
     @Override
     protected void onResume() {
+	super.onResume();
         long startTime = 0;
         if (DEBUG_RESUME_TIME) {
             startTime = System.currentTimeMillis();
         }
-        super.onResume();
-           //Start - PDi Additions
-		SharedPreferences prefs = getSharedPreferences(PDI_PREFERENCES, MODE_PRIVATE);
-		Boolean l_PasswordHasBeenSet = prefs.getBoolean(PASSWORD_HAS_BEEN_SET, false);
-		
-		//the PASSWORD_HAS_BEEN_SET pref flag will be set to true in onActivityresult function
-		if(!l_PasswordHasBeenSet)
-		{
-			SetPasswordFunction();	
-			acquireWakeLock();
-		}	   							
-		//End - PDi Addition
         if (mOnResumeState == State.WORKSPACE) {
             showWorkspace(false);
         } else if (mOnResumeState == State.APPS_CUSTOMIZE) {
             showAllApps(false);
         }
         mOnResumeState = State.NONE;
-       // Background was set to gradient in onPause(), restore to black if in all apps.
+        // Background was set to gradient in onPause(), restore to black if in all apps.
         setWorkspaceBackground(mState == State.WORKSPACE);
- // Process any items that were added while Launcher was away
+ 	// Process any items that were added while Launcher was away
         InstallShortcutReceiver.flushInstallQueue(this);
 
         mPaused = false;

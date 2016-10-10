@@ -115,7 +115,7 @@
             android:label="@string/application_name"
             android:icon="@mipmap/ic_launcher_home"
             android:finishOnCloseSystemDialogs="false"
-            android:enabled="true"
+            android:enabled="false"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.FORCE_PASSWORD" />
@@ -134,7 +134,7 @@
         <receiver android:name="com.android.launcher2.ForceUserPassword$DeviceAdminSampleReceiver"
                 android:label="@string/application_name"
                 android:description="@string/application_name"
-                                android:enabled="true"
+                android:enabled="false"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"  android:resource="@xml/default_admin" />
             <intent-filter>
