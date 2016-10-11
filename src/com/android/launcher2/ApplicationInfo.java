@@ -64,30 +64,6 @@ class ApplicationInfo extends ItemInfo {
     /**
      * Must not hold the Context.
      */
-   /*  public ApplicationInfo(LauncherActivityInfo info, UserHandle user, IconCache iconCache,
-            HashMap<Object, CharSequence> labelCache) {
-
-        this.componentName = info.getComponentName();
-        this.container = ItemInfo.NO_ID;
-        this.setActivity(componentName,
-                Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-
-        int appFlags = info.getApplicationInfo().flags;
-        if ((appFlags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) {
-            flags |= DOWNLOADED_FLAG;
-        }
-        if ((appFlags & android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
-            flags |= UPDATED_SYSTEM_APP_FLAG;
-        }
-        firstInstallTime = info.getFirstInstallTime();
-        iconCache.getTitleAndIcon(this, info, labelCache);
-        intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        intent.setComponent(info.getComponentName());
-        intent.putExtra(EXTRA_PROFILE, user);
-        updateUser(intent);
-    } */
-
         public ApplicationInfo(PackageManager pm, ResolveInfo info, IconCache iconCache,
             HashMap<Object, CharSequence> labelCache) {
         final String packageName = info.activityInfo.applicationInfo.packageName;
