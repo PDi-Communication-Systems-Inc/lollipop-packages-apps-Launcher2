@@ -1348,9 +1348,6 @@ public class LauncherModel extends BroadcastReceiver {
                             LauncherSettings.Favorites.SPANY);
                     final int profileIdIndex = c.getColumnIndexOrThrow(
                             LauncherSettings.Favorites.PROFILE_ID);
-                    //final int uriIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.URI);
-                    //final int displayModeIndex = c.getColumnIndexOrThrow(
-                    //        LauncherSettings.Favorites.DISPLAY_MODE);
 
                     ShortcutInfo info;
                     String intentDescription;
@@ -1520,50 +1517,7 @@ public class LauncherModel extends BroadcastReceiver {
                                     }
                                     sBgItemsIdMap.put(appWidgetInfo.id, appWidgetInfo);
                                     sBgAppWidgets.add(appWidgetInfo);
-                                   /* try{ 	
-                                    File f = new File(Environment.getUserSystemDirectory(userid), "appwidgets.xml");
-                                    FileInputStream in = new FileInputStream(f);
-                                    XmlPullParser parser = Xml.newPullParser();
-                                    parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-                                    parser.setInput(in, null);
-                                    parser.nextTag();
-                                    parser.require(XmlPullParser.START_TAG, null, "gs");
-                                    LinkedHashMap<String, String> pEntries = new LinkedHashMap<String, String>();
-                                    LinkedHashMap<String, String> gEntries = new LinkedHashMap<String, String>();
-                                    
-                                    while (parser.next() != XmlPullParser.END_TAG) {
-                                    	 if (parser.getEventType() != XmlPullParser.START_TAG) {
-                                             continue;
-                                         }
-                                    	 String name = parser.getName();
-                                    	 if (name.equals("p")) {
-                                    		 String pkgName = parser.getAttributeValue(null, "pkg");
-                                    		 String providerName = parser.getAttributeValue(null, "cl");
-                                    		 pEntries.put(pkgName, providerName);
-                                    	 }
-                                    	 else if (name.equals("g")) {
-                                    		 String idVal = parser.getAttributeValue(null, "id");
-                                    		 String pkgIndex = parser.getAttributeValue(null, "p");
-                                    		 gEntries.put(idVal, pkgIndex);
-                                    	 }
-                                    }
-                                    String fndPackageIndex = gEntries.get(Integer.toString(appWidgetId));
-                                    ArrayList<String> pEntriesItAL = new ArrayList<String>(pEntries.values());
-                                    ArrayList<String> pEntriesItALkeys = new ArrayList<String>(pEntries.keySet());
-                                    String fndProviderName = pEntriesItAL.get(Integer.valueOf(fndPackageIndex));
-                                    String fndPkgName = pEntriesItALkeys.get(Integer.valueOf(fndPackageIndex));
-                                    ComponentName cn = new ComponentName(fndPkgName, fndProviderName);
-                                    widgets.bindAppWidgetIdIfAllowed(appWidgetId, cn);
-                                    Log.w(TAG, "Trying to restore appWidgetId: "  + appWidgetId);
-                                    }
-                                    catch(FileNotFoundException e){
-                                        Log.e(TAG, "Could not work with appwidgets.xml, init default");
-                                    }
-                                    String log = "Deleting widget that isn't installed anymore: id="
-                                        + id + " appWidgetId=" + appWidgetId;
- 				    Log.e(TAG, log);
-                                    Launcher.sDumpLogs.add(log);
-                                    itemsToRemove.add(id); */
+                                   
                                 } else {
                                     appWidgetInfo = new LauncherAppWidgetInfo(appWidgetId,
                                             provider.provider);
@@ -2006,10 +1960,6 @@ public class LauncherModel extends BroadcastReceiver {
             List<ResolveInfo> apps = null;               
 
            // mBgAllAppsList.clear();
-          /*  final int profileCount = profiles.size();
-            for (int p = 0; p < profileCount; p++) {
-                UserHandle user = profiles.get(p);
-                List<LauncherActivityInfo> apps = null; */
                 int N = Integer.MAX_VALUE; 
                 int startIndex;
                 int i = 0;
@@ -2249,19 +2199,6 @@ public class LauncherModel extends BroadcastReceiver {
         }
     }
 
-  /*    public static ArrayList<Object> getSortedWidgetsAndShortcuts(Context context) {
-        PackageManager packageManager = context.getPackageManager();
-        final ArrayList<Object> widgetsAndShortcuts = new ArrayList<Object>();
-        widgetsAndShortcuts.addAll(AppWidgetManager.getInstance(context).getInstalledProviders());
-        Intent shortcutsIntent = new Intent(Intent.ACTION_CREATE_SHORTCUT);
-        widgetsAndShortcuts.addAll(packageManager.queryIntentActivities(shortcutsIntent, 0));
-        Collections.sort(widgetsAndShortcuts,
-            new LauncherModel.WidgetAndShortcutNameComparator(packageManager));
-        return widgetsAndShortcuts;
-    }
-*/
-
-
     // Returns a list of ResolveInfos/AppWindowInfos in sorted order
     public static ArrayList<Object> getSortedWidgetsAndShortcuts(Context context) {
                
@@ -2309,64 +2246,6 @@ public class LauncherModel extends BroadcastReceiver {
      *
      * If c is not null, then it will be used to fill in missing data like the title and icon.
      */
-  /*  public ShortcutInfo getShortcutInfo(PackageManager manager, Intent intent, UserHandle user,
-            Context context,
-            Cursor c, int iconIndex, int titleIndex, HashMap<Object, CharSequence> labelCache) {
-        Bitmap icon = null;
-        final ShortcutInfo info = new ShortcutInfo();
-        info.user = user;
-
-        ComponentName componentName = intent.getComponent();
-        if (componentName == null) {
-            return null;
-        }
-
-        LauncherActivityInfo lai = mLauncherApps.resolveActivity(intent, user);
-        if (lai == null) {
-            return null;
-        }
-
-        icon = mIconCache.getIcon(componentName, lai, labelCache);
-        // the db
-        if (icon == null) {
-            if (c != null) {
-                icon = getIconFromCursor(c, iconIndex, context);
-            }
-        }
-        // the fallback icon
-        if (icon == null) {
-            icon = getFallbackIcon();
-            info.usingFallbackIcon = true;
-        }
-        info.setIcon(icon);
-
-        // from the resource
-        ComponentName key = lai.getComponentName();
-        if (labelCache != null && labelCache.containsKey(key)) {
-            info.title = labelCache.get(key);
-        } else {
-            info.title = lai.getLabel();
-            if (labelCache != null) {
-                labelCache.put(key, info.title);
-            }
-        }
-        // from the db
-        if (info.title == null) {
-            if (c != null) {
-                info.title =  c.getString(titleIndex);
-            }
-        }
-        // fall back to the class name of the activity
-        if (info.title == null) {
-            info.title = componentName.getClassName();
-        }
-
-        info.contentDescription = mApp.getPackageManager().getUserBadgedLabel(info.title, user);
-        info.itemType = LauncherSettings.Favorites.ITEM_TYPE_APPLICATION;
-        return info;
-    }
-*/
-
       public ShortcutInfo getShortcutInfo(PackageManager manager, Intent intent, Context context,
             Cursor c, int iconIndex, int titleIndex, HashMap<Object, CharSequence> labelCache) {
         Bitmap icon = null;

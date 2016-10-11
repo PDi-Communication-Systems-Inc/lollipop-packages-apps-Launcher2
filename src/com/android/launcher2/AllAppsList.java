@@ -87,17 +87,6 @@ class AllAppsList {
     /**
      * Add the icons for the supplied apk called packageName.
      */
-   /*  public void addPackage(Context context, String packageName) {
-        LauncherApps launcherApps = (LauncherApps)
-                context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-        final List<LauncherActivityInfo> matches = launcherApps.getActivityList(packageName,
-                user);
-
-        for (LauncherActivityInfo info : matches) {
-            add(new ApplicationInfo(info, user, mIconCache, null));
-        }
-    } */
-
     public void addPackage(Context context, String packageName) {
         final List<ResolveInfo> matches = findActivitiesForPackage(context, packageName);
 
@@ -107,9 +96,6 @@ class AllAppsList {
             }
         }
     }
-
-
-
     /**
      * Remove the apps for the given apk identified by packageName.
      */
@@ -131,11 +117,6 @@ class AllAppsList {
      * Add and remove icons for this package which has been updated.
      */
     public void updatePackage(Context context, String packageName) {
-       /* LauncherApps launcherApps = (LauncherApps)
-                context.getSystemService(Context.LAUNCHER_APPS_SERVICE); */
-  //      final List<LauncherActivityInfo> matches = launcherApps.getActivityList(packageName,
-    //            user);
-
         final List<ResolveInfo> matches = findActivitiesForPackage(context, packageName);
         if (matches.size() > 0) {
             // Find disabled/removed activities and remove them from data and add them
@@ -197,16 +178,6 @@ class AllAppsList {
      * Returns whether <em>apps</em> contains <em>component</em> for a specific
      * user profile.
      */
-    /*private static boolean findActivity(List<LauncherActivityInfo> apps, ComponentName component) {
-        for (LauncherActivityInfo info : apps) {
-            if (info.getUser().equals(user)
-                    && info.getComponentName().equals(component)) {
-                return true;
-            }
-        }
-        return false;
-    } */
-
      private static boolean findActivity(List<ResolveInfo> apps, ComponentName component) {
         final String className = component.getClassName();
         for (ResolveInfo info : apps) {

@@ -554,12 +554,6 @@ public class LauncherProvider extends ContentProvider {
                 version = 12;
             }
 
-          /*  if(version < 13){
-                if (addProfileColumn(db)){
-                version = 13;
-             }
-             } */
-
             if (version != DATABASE_VERSION) {
                 Log.w(TAG, "Destroying all old data.");
                 db.execSQL("DROP TABLE IF EXISTS " + TABLE_FAVORITES);
