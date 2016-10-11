@@ -48,7 +48,7 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
-
+import android.os.UserManager;
 import com.android.launcher.R;
 import com.android.launcher2.LauncherSettings.Favorites;
 
@@ -313,6 +313,12 @@ public class LauncherProvider extends ContentProvider {
             	if (LOGD) Log.d(TAG, "Database not found, creating it");
             	
                 mMaxId = 1;
+                
+                final UserManager um =
+                    (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+            // Default profileId to the serial number of this user.
+            long userSerialNumber = um.getSerialNumberForUser(
+                    android.os.Process.myUserHandle());                
 
                 db.execSQL("CREATE TABLE favorites (" +
                         "_id INTEGER PRIMARY KEY," +
@@ -332,14 +338,15 @@ public class LauncherProvider extends ContentProvider {
                         "iconResource TEXT," +
                         "icon BLOB," +
                         "uri TEXT," +
-                        "displayMode INTEGER" +
+                        "displayMode INTEGER," +
+                        "profileId INTEGER DEFAULT " + userSerialNumber +
                         ");");
                 
                 // Database was just created, so wipe any previous widgets
-                /* if (mAppWidgetHost != null) {
+               /*  if (mAppWidgetHost != null) {
                     mAppWidgetHost.deleteHost();
                     sendAppWidgetResetNotify();
-                } */
+                } */ 
             }
             
             if (!convertDatabase(db)) {
@@ -408,6 +415,7 @@ public class LauncherProvider extends ContentProvider {
             final int cellYIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.CELLY);
             final int uriIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.URI);
             final int displayModeIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.DISPLAY_MODE);
+          final int profileIdIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.PROFILE_ID);
 
             ContentValues[] rows = new ContentValues[c.getCount()];
             int i = 0;
@@ -428,6 +436,7 @@ public class LauncherProvider extends ContentProvider {
                 values.put(LauncherSettings.Favorites.CELLY, c.getInt(cellYIndex));
                 values.put(LauncherSettings.Favorites.URI, c.getString(uriIndex));
                 values.put(LauncherSettings.Favorites.DISPLAY_MODE, c.getInt(displayModeIndex));
+                values.put(LauncherSettings.Favorites.PROFILE_ID, c.getInt(profileIdIndex));
                 rows[i++] = values;
             }
 
@@ -545,10 +554,40 @@ public class LauncherProvider extends ContentProvider {
                 version = 12;
             }
 
+          /*  if(version < 13){
+                if (addProfileColumn(db)){
+                version = 13;
+             }
+             } */
+
             if (version != DATABASE_VERSION) {
                 Log.w(TAG, "Destroying all old data.");
                 db.execSQL("DROP TABLE IF EXISTS " + TABLE_FAVORITES);
                 onCreate(db);
+            }
+        }
+
+         private boolean addProfileColumn(SQLiteDatabase db) {
+            db.beginTransaction();
+            try {
+                final UserManager um =
+                        (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+                // Default to the serial number of this user, for older
+                // shortcuts.
+                long userSerialNumber = um.getSerialNumberForUser(
+                        android.os.Process.myUserHandle());
+                // Insert new column for holding user serial number
+                db.execSQL("ALTER TABLE favorites " +
+                        "ADD COLUMN profileId INTEGER DEFAULT "
+                        + userSerialNumber + ";");
+                db.setTransactionSuccessful();
+                return true;
+            } catch (SQLException ex) {
+                // Old version remains, which means we wipe old data
+                Log.e(TAG, ex.getMessage(), ex);
+                return false;
+            } finally {
+                db.endTransaction();
             }
         }
 

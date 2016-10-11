@@ -321,8 +321,8 @@ public class ForceUserPassword extends Activity {
            // start the restricted user config activity
 			
 		   // TODO: Complete app restriction choices later on
-           Intent intent = new Intent(this, AppChoiceView.class);
-           startActivity(intent);
+         //  Intent intent = new Intent(this, AppChoiceView.class);
+          // startActivity(intent);
            return;
     }
 	

@@ -53,6 +53,24 @@ import android.content.pm.PackageInfo;
 import com.android.launcher.R;
 import com.android.launcher2.InstallWidgetReceiver.WidgetMimeTypeHandlerData;
 
+import android.content.res.TypedArray;
+import android.content.res.XmlResourceParser;
+
+import android.database.sqlite.SQLiteDatabase;
+
+import android.util.AttributeSet;
+
+import android.util.Xml;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.FileInputStream;
+
+import java.util.LinkedHashMap;
+
+import org.xmlpull.v1.XmlPullParser;
+
+
 import android.content.pm.PackageManager.NameNotFoundException;
 import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
@@ -534,7 +552,7 @@ public class LauncherModel extends BroadcastReceiver {
         final int cellYIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.CELLY);
         final int spanXIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.SPANX);
         final int spanYIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.SPANY);
-       // final int profileIdIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.PROFILE_ID);
+      //  final int profileIdIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.PROFILE_ID);
        // final UserManager um = ((UserManager) context.getSystemService(Context.USER_SERVICE));
         try {
             while (c.moveToNext()) {
@@ -546,13 +564,9 @@ public class LauncherModel extends BroadcastReceiver {
                 item.container = c.getInt(containerIndex);
                 item.itemType = c.getInt(itemTypeIndex);
                 item.screen = c.getInt(screenIndex);
-         //       int serialNumber = c.getInt(profileIdIndex);
-           //     item.user = um.getUserForSerialNumber(serialNumber);
-                // If the user no longer exists, skip this item
-             //   if (item.user != null) {
+              
                     items.add(item);
-               // }
-            }
+                }
         } catch (Exception e) {
             items.clear();
         } finally {
@@ -1276,14 +1290,14 @@ public class LauncherModel extends BroadcastReceiver {
   
             UserManager um = (UserManager) this.mContext.getSystemService(Context.USER_SERVICE);
             ActivityManager acmg = (ActivityManager) this.mContext.getSystemService(Context.ACTIVITY_SERVICE);
-           // int userid = acmg.getCurrentUser();
-           // if(userid == 0) {
+           int userid = acmg.getCurrentUser();
+           if(userid == 0) {
              mApp.getLauncherProvider().loadDefaultFavoritesIfNecessary(0);
-            // }
+             }
 
 
             // Make sure the default workspace is loaded, if needed
-            mApp.getLauncherProvider().loadDefaultFavoritesIfNecessary(0);
+           // mApp.getLauncherProvider().loadDefaultFavoritesIfNecessary(0);
 
             synchronized (sBgLock) {
                 sBgWorkspaceItems.clear();
@@ -1332,8 +1346,8 @@ public class LauncherModel extends BroadcastReceiver {
                             (LauncherSettings.Favorites.SPANX);
                     final int spanYIndex = c.getColumnIndexOrThrow(
                             LauncherSettings.Favorites.SPANY);
-                   // final int profileIdIndex = c.getColumnIndexOrThrow(
-                     //       LauncherSettings.Favorites.PROFILE_ID);
+                    final int profileIdIndex = c.getColumnIndexOrThrow(
+                            LauncherSettings.Favorites.PROFILE_ID);
                     //final int uriIndex = c.getColumnIndexOrThrow(LauncherSettings.Favorites.URI);
                     //final int displayModeIndex = c.getColumnIndexOrThrow(
                     //        LauncherSettings.Favorites.DISPLAY_MODE);
@@ -1344,6 +1358,7 @@ public class LauncherModel extends BroadcastReceiver {
                     int container;
                     long id;
                     Intent intent;
+                    boolean defaultWidgetSetup = false;
                     UserHandle user;
 
                     while (!mStopped && c.moveToNext()) {
@@ -1354,13 +1369,13 @@ public class LauncherModel extends BroadcastReceiver {
                             case LauncherSettings.Favorites.ITEM_TYPE_APPLICATION:
                             case LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT:
                                 intentDescription = c.getString(intentIndex);
-                           //     int serialNumber = c.getInt(profileIdIndex);
-                           //     user = mUserManager.getUserForSerialNumber(serialNumber);
-                                // If the user doesn't exist anymore, skip.
-                             /*   if (user == null) {
+                                int serialNumber = c.getInt(profileIdIndex);
+                               user = mUserManager.getUserForSerialNumber(serialNumber);
+                                //If the user doesn't exist anymore, skip.
+                              if (user == null) {
                                     itemsToRemove.add(c.getLong(idIndex));
                                     continue;
-                                } */
+                                } 
                                 try {
                                     intent = Intent.parseUri(intentDescription, 0);
                                 } catch (URISyntaxException e) {
@@ -1397,7 +1412,7 @@ public class LauncherModel extends BroadcastReceiver {
                                     info.screen = c.getInt(screenIndex);
                                     info.cellX = c.getInt(cellXIndex);
                                     info.cellY = c.getInt(cellYIndex);
-                                   // info.intent.putExtra(ItemInfo.EXTRA_PROFILE, info.user);
+                                    info.intent.putExtra(ItemInfo.EXTRA_PROFILE, info.user);
 
                                     // check & update map of what's occupied
                                     if (!checkItemPlacement(occupied, info)) {
@@ -1470,11 +1485,85 @@ public class LauncherModel extends BroadcastReceiver {
 
                                 if (!isSafeMode && (provider == null || provider.provider == null ||
                                         provider.provider.getPackageName() == null)) {
+
+                                    
+                                	if (provider == null) {
+                                		Log.e(TAG, "Provider is null");
+                                	}
+                                	else if (provider.provider == null) {
+                                		Log.e(TAG, "Provider.provider is null");
+                                	}
+                                	else if (provider.provider.getPackageName() == null) {
+                                		Log.e(TAG, "provider.provider.getPackageName() is null");
+                                	}
+
+                                    appWidgetInfo = new LauncherAppWidgetInfo(appWidgetId, null);
+                                    appWidgetInfo.id = id;
+                                    appWidgetInfo.screen = c.getInt(screenIndex);
+                                    appWidgetInfo.cellX = c.getInt(cellXIndex);
+                                    appWidgetInfo.cellY = c.getInt(cellYIndex);
+                                    appWidgetInfo.spanX = c.getInt(spanXIndex);
+                                    appWidgetInfo.spanY = c.getInt(spanYIndex);
+
+                                    container = c.getInt(containerIndex);
+                                    if (container != LauncherSettings.Favorites.CONTAINER_DESKTOP &&
+                                        container != LauncherSettings.Favorites.CONTAINER_HOTSEAT) {
+                                        Log.e(TAG, "Widget found where container != " +
+                                            "CONTAINER_DESKTOP nor CONTAINER_HOTSEAT - ignoring!");
+                                        continue;
+                                    }
+                                    appWidgetInfo.container = c.getInt(containerIndex);
+
+                                    // check & update map of what's occupied
+                                    if (!checkItemPlacement(occupied, appWidgetInfo)) {
+                                        break;
+                                    }
+                                    sBgItemsIdMap.put(appWidgetInfo.id, appWidgetInfo);
+                                    sBgAppWidgets.add(appWidgetInfo);
+                                   /* try{ 	
+                                    File f = new File(Environment.getUserSystemDirectory(userid), "appwidgets.xml");
+                                    FileInputStream in = new FileInputStream(f);
+                                    XmlPullParser parser = Xml.newPullParser();
+                                    parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+                                    parser.setInput(in, null);
+                                    parser.nextTag();
+                                    parser.require(XmlPullParser.START_TAG, null, "gs");
+                                    LinkedHashMap<String, String> pEntries = new LinkedHashMap<String, String>();
+                                    LinkedHashMap<String, String> gEntries = new LinkedHashMap<String, String>();
+                                    
+                                    while (parser.next() != XmlPullParser.END_TAG) {
+                                    	 if (parser.getEventType() != XmlPullParser.START_TAG) {
+                                             continue;
+                                         }
+                                    	 String name = parser.getName();
+                                    	 if (name.equals("p")) {
+                                    		 String pkgName = parser.getAttributeValue(null, "pkg");
+                                    		 String providerName = parser.getAttributeValue(null, "cl");
+                                    		 pEntries.put(pkgName, providerName);
+                                    	 }
+                                    	 else if (name.equals("g")) {
+                                    		 String idVal = parser.getAttributeValue(null, "id");
+                                    		 String pkgIndex = parser.getAttributeValue(null, "p");
+                                    		 gEntries.put(idVal, pkgIndex);
+                                    	 }
+                                    }
+                                    String fndPackageIndex = gEntries.get(Integer.toString(appWidgetId));
+                                    ArrayList<String> pEntriesItAL = new ArrayList<String>(pEntries.values());
+                                    ArrayList<String> pEntriesItALkeys = new ArrayList<String>(pEntries.keySet());
+                                    String fndProviderName = pEntriesItAL.get(Integer.valueOf(fndPackageIndex));
+                                    String fndPkgName = pEntriesItALkeys.get(Integer.valueOf(fndPackageIndex));
+                                    ComponentName cn = new ComponentName(fndPkgName, fndProviderName);
+                                    widgets.bindAppWidgetIdIfAllowed(appWidgetId, cn);
+                                    Log.w(TAG, "Trying to restore appWidgetId: "  + appWidgetId);
+                                    }
+                                    catch(FileNotFoundException e){
+                                        Log.e(TAG, "Could not work with appwidgets.xml, init default");
+                                    }
                                     String log = "Deleting widget that isn't installed anymore: id="
                                         + id + " appWidgetId=" + appWidgetId;
-                                    Log.e(TAG, log);
+ 				    Log.e(TAG, log);
                                     Launcher.sDumpLogs.add(log);
-                                    itemsToRemove.add(id);
+                                    itemsToRemove.add(id); */
                                 } else {
                                     appWidgetInfo = new LauncherAppWidgetInfo(appWidgetId,
                                             provider.provider);
@@ -1488,7 +1577,7 @@ public class LauncherModel extends BroadcastReceiver {
                                     appWidgetInfo.minSpanX = minSpan[0];
                                     appWidgetInfo.minSpanY = minSpan[1];
 
-                                    container = c.getInt(containerIndex);
+                                     container = c.getInt(containerIndex);
                                     if (container != LauncherSettings.Favorites.CONTAINER_DESKTOP &&
                                         container != LauncherSettings.Favorites.CONTAINER_HOTSEAT) {
                                         Log.e(TAG, "Widget found where container != " +
@@ -2160,9 +2249,23 @@ public class LauncherModel extends BroadcastReceiver {
         }
     }
 
+  /*    public static ArrayList<Object> getSortedWidgetsAndShortcuts(Context context) {
+        PackageManager packageManager = context.getPackageManager();
+        final ArrayList<Object> widgetsAndShortcuts = new ArrayList<Object>();
+        widgetsAndShortcuts.addAll(AppWidgetManager.getInstance(context).getInstalledProviders());
+        Intent shortcutsIntent = new Intent(Intent.ACTION_CREATE_SHORTCUT);
+        widgetsAndShortcuts.addAll(packageManager.queryIntentActivities(shortcutsIntent, 0));
+        Collections.sort(widgetsAndShortcuts,
+            new LauncherModel.WidgetAndShortcutNameComparator(packageManager));
+        return widgetsAndShortcuts;
+    }
+*/
+
+
     // Returns a list of ResolveInfos/AppWindowInfos in sorted order
     public static ArrayList<Object> getSortedWidgetsAndShortcuts(Context context) {
-        ArrayList<Object> widgetsAndShortcuts = new ArrayList<Object>();
+               
+  ArrayList<Object> widgetsAndShortcuts = new ArrayList<Object>();
 
         // Get all user profiles.
         AppWidgetManager widgetManager = (AppWidgetManager) context.getSystemService(
@@ -2171,7 +2274,7 @@ public class LauncherModel extends BroadcastReceiver {
                 Context.USER_SERVICE);
 
         List<UserHandle> profiles = userManager.getUserProfiles();
-
+       
         // Add the widgets for the managed profiles next.
         final int profileCount = profiles.size();
         for (int i = 0; i < profileCount; i++) {
@@ -2180,7 +2283,7 @@ public class LauncherModel extends BroadcastReceiver {
             List<AppWidgetProviderInfo> providers = widgetManager
                     .getInstalledProvidersForProfile(profile);
             widgetsAndShortcuts.addAll(providers);
-        }
+} 
 
         // Add all shortcuts for the user.
         PackageManager packageManager = context.getPackageManager();
@@ -2191,7 +2294,7 @@ public class LauncherModel extends BroadcastReceiver {
                 .WidgetAndShortcutNameComparator(packageManager));
 
         return widgetsAndShortcuts;
-    }
+    } 
 
     /**
      * This is called from the code that adds shortcuts from the intent receiver.  This
