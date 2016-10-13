@@ -200,8 +200,8 @@ public class ForceUserPassword extends Activity {
            // start the restricted user config activity
 			
 		   // TODO: Complete app restriction choices later on
-           Intent intent = new Intent(this, AppChoiceView.class);
-           startActivity(intent);
+         //  Intent intent = new Intent(this, AppChoiceView.class);
+          // startActivity(intent);
            return;
     }
 	
@@ -251,12 +251,6 @@ public class ForceUserPassword extends Activity {
         public void onEnabled(Context context, Intent intent) {
             //showToast(context,  "Rahul says enabled");
         }
-
-       // @Override
-       // public CharSequence onDisableRequested(Context context, Intent intent) {
-           // return context.getString(R.string.admin_receiver_status_disable_warning);
-       // }
-
         @Override
         public void onDisabled(Context context, Intent intent) {
           // showToast(context, "Rahul says disabled");
@@ -276,18 +270,7 @@ public class ForceUserPassword extends Activity {
 	    		if (count >= (mDPM.getMaximumFailedPasswordsForWipe(mDeviceAdmin) - 1))
 	    		{
 	    			//delete this user in 4.2 and above	    			
-	    			int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-	    			/*if (currentapiVersion >= android.os.Build.VERSION_CODES.JELLY_BEAN)
-	    			{	    			    	    			
-		    			try
-		    			{	    						    			
-		    			}
-		    			catch (Exception e)
-		    			{    						    				
-		    			}	    			
-	    			} else{
-	    			    // do something for phones running an SDK before 4.2
-	    			}   */ 			
+	    			int currentapiVersion = android.os.Build.VERSION.SDK_INT; 			
 	    		}
 	    		else //count less than min - do nothing
 	    		{
@@ -312,11 +295,4 @@ public class ForceUserPassword extends Activity {
         	
         }
     }
-	
-	
-	
-	
-	
-	
-
 }
