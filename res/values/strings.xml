@@ -292,6 +292,8 @@ s -->
     <string name="foxnews">Fox News</string>
     <string name="cnn">CNN</string>
     <string name="pinterest">Pinterest</string>
+    <string name="usePin">Use PIN</string>
+    <string name="usePassword">Use Password</string>
     <string name="nxsteps_training">Training</string>
     <string name="todo">TODO</string>
 <!-- End PDi Additions -->

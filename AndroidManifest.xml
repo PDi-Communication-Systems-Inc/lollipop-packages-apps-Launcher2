@@ -123,14 +123,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.android.launcher2.AppChoiceView"
-            android:label="@string/app_choice_view_name"
-            android:finishOnCloseSystemDialogs="false"
-            android:enabled="true"
-            android:screenOrientation="landscape">
-        </activity>
-
         <receiver android:name="com.android.launcher2.ForceUserPassword$DeviceAdminSampleReceiver"
                 android:label="@string/application_name"
                 android:description="@string/application_name"
@@ -143,6 +135,39 @@
             </intent-filter>
         </receiver>
              
+        <activity
+            android:name="com.android.launcher2.PinOrPasswordChoice"
+            android:label="@string/application_name"
+            android:icon="@mipmap/ic_launcher_home"
+            android:finishOnCloseSystemDialogs="false"
+            android:enabled="true"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.PIN_OR_PASSWORD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.android.launcher2.AppChoiceView"
+            android:label="@string/app_choice_view_name"
+            android:finishOnCloseSystemDialogs="false"
+            android:enabled="true"
+            android:screenOrientation="landscape">
+        </activity>
+
+
+        <receiver android:name="com.android.launcher2.PinOrPasswordChoice$DeviceAdminSampleReceiver"
+                android:label="@string/application_name"
+                android:description="@string/application_name"
+                                android:enabled="true"
+                android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"  android:resource="@xml/default_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+                <action android:name="android.app.action.DEVICE_ADMIN_DISABLED" />
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name="com.android.launcher2.WallpaperChooser"

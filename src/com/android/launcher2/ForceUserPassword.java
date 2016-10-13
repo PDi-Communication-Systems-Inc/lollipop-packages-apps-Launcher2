@@ -36,6 +36,7 @@ public class ForceUserPassword extends Activity {
     protected boolean mPasswordHasBeenSet = false;
     private static final int REQUEST_CODE_ENABLE_ADMIN = 1;
     private static final int REQUEST_CODE_RESET_PASSWORD = 2;
+    private static final int REQUEST_CODE_PIN_OR_PASSWORD = 11;
     
     private static final long MS_PER_MINUTE = 60 * 1000;
     private static final long MS_PER_HOUR = 60 * MS_PER_MINUTE;
@@ -43,43 +44,6 @@ public class ForceUserPassword extends Activity {
     
     private static final String TAG = "ForceUserPassword";
     
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus)
-    {    	
-    	Log.i(TAG, "Force user password's focus changed");
-    	Log.i(TAG, mPasswordHasBeenSet ? "Password has been set" : 
-    			                         "Password has not been set");
-    	if(!mPasswordHasBeenSet)
-        {
-	    	//if password has not been set - keep the status bar collapsed
-    		//TBD- Does not completely secure the status bar - change statusbarcode
-	    	try
-            {
-               if(!hasFocus)
-               {
-                    Object service  = getSystemService("statusbar");
-                    Class<?> statusbarManager = Class.forName("android.app.StatusBarManager");
-                    Method collapse = statusbarManager.getMethod("collapse");
-                    collapse.setAccessible(true);
-                    collapse.invoke(service);
-                    Log.i(TAG, "Status Bar Collapsed");
-        	    	
-        	    	//and send home intent to bring this to the front again
-                    //Intent startMain = new Intent(Intent.ACTION_MAIN);
-                    //startMain.addCategory(Intent.CATEGORY_HOME);
-                    //startActivity(startMain);
-                    //Log.i(TAG, "HOME intent sent");
-               }
-            }
-            catch(Exception ex)
-            {
-            	Log.e(TAG, "Exception caught on collpasing the status bar");
-            }	    	
-        }
-    	else {
-    		finish();
-    	}
-    }
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -93,24 +57,6 @@ public class ForceUserPassword extends Activity {
            mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
            mDeviceAdmin = new ComponentName(this, DeviceAdminSampleReceiver.class);
         
-           //get data passed from the 
-      	   Bundle extras = getIntent().getExtras();
-      	   if(extras !=null) {
-             String action = extras.getString("ACTION");
-             String kind = extras.getString("KIND");	
-      		    
-             if(action.compareTo("ACTION") == 0)
-             {
-      	         try
-      		 {
-      		    DoAdminAction(kind);
-      		 }
-      		 catch (Exception e) {
-      		    Log.e(TAG, e.getMessage() );
-      	         }		
-             }	    		   
-           }	
-        
 	   setContentView(R.layout.force_user_password);
 		
 	   // Capture our button from layout
@@ -120,27 +66,6 @@ public class ForceUserPassword extends Activity {
 	
 	   checkAndReturnResult();				
 		   
-	}
-	
-	private void DoAdminAction(String kind)
-	{
-		//Do the Admin Action
-		try 
-		{     			
-			if (mDPM.isAdminActive(mDeviceAdmin)) 
-			{
-				if(kind.compareTo("LOCK") == 0)
-				{
-					mDPM.lockNow();
-				}				 
-			}
-			else
-				Log.e(TAG, "Device admin not active- cannot execute action" );
-							
-		} 
-		catch (Exception e) {
-			Log.e(TAG, e.getMessage() );
-		}		
 	}
 	
 	private void ShowToast(String message, int duration)
@@ -174,7 +99,6 @@ public class ForceUserPassword extends Activity {
 			}			
 			else {
 				// Already is a device administrator, can do security operations now.
-				setAdminRules();
 				resetPassword();						
 			}		
 	    } 
@@ -202,36 +126,15 @@ public class ForceUserPassword extends Activity {
 		}			
 		else {
 			// Already is a device administrator, can do security operations now.
-			setAdminRules();
 			resetPassword();						
 		}			
 		
 	}
 	
-	private void setAdminRules()
-	{
-		try
-		{
-			//TODO: Make these configurable
-			mDPM.setPasswordQuality(mDeviceAdmin, DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
-			//mDPM.setPasswordQuality(mDeviceAdmin, DevicePolicyManager.PASSWORD_QUALITY_ALPHANUMERIC);
-			mDPM.setPasswordMinimumLength(mDeviceAdmin, 4); //changed from 6 to 4 - NIH feedback
-			mDPM.setMaximumTimeToLock(mDeviceAdmin, 30 * MS_PER_MINUTE); //maximum lock time (after sleep) that can be set by the user
-			//mDPM.setMaximumFailedPasswordsForWipe(mDeviceAdmin, 6);	Do not factory reset device on (any number of) wrong pin entries	
-		}
-		catch(Exception e)
-		{
-			Log.e(TAG, e.getMessage() );								
-		}
-	}
-	
 	private void resetPassword()
 	{
-		Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
-		//use internal API - LockPatternUtils.PASSWORD_TYPE_KEY = "lockscreen.password_type";
-		//invoke the PIN - note that this will eventually depend on the quality of password set by admin
-		intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
-		startActivityForResult(intent, REQUEST_CODE_RESET_PASSWORD);		
+                Intent intent = new Intent(this, PinOrPasswordChoice.class);
+                startActivityForResult(intent, REQUEST_CODE_PIN_OR_PASSWORD);
 	}
 	
 	private void showOKDialog(String message,String title)
@@ -261,7 +164,6 @@ public class ForceUserPassword extends Activity {
 		    	// Has become the device administrator.
 		    	ShowToast("Granted Admin",Toast.LENGTH_SHORT);
 				
-				setAdminRules();				
 				resetPassword(); 
 				//showOKDialog("Please choose your password","Password Type");
 	            
@@ -271,36 +173,13 @@ public class ForceUserPassword extends Activity {
 		    	ShowToast( "Device Admin must be Activated to continue!",Toast.LENGTH_SHORT);    			    					
 		    }
 	    }
-	    if (REQUEST_CODE_RESET_PASSWORD == requestCode)
-	    {
-		    if (resultCode == Activity.RESULT_OK) 
-		    {
-		    	if(!mDPM.isActivePasswordSufficient())
-				{				
-		    		showOKDialog("Please choose your password","Insufficient Password");					
-					resetPassword();
-				}
-				else // password is sufficient					
-				{
-					mPasswordHasBeenSet= true;					
-					ShowToast( "Password Successfully Changed",Toast.LENGTH_SHORT);
-				}	                        
-		    }
-		    else // if user chose cancelled from password change 
-		    {
-		    	//check again for sufficiency
-				if(!mDPM.isActivePasswordSufficient())
-				{	
-					ShowToast( "Password not sufficient",Toast.LENGTH_SHORT);
-			    	resetPassword();
-				}
-				else // password is sufficient					
-				{
-					mPasswordHasBeenSet= true;
-					ShowToast( "Password conforms to password policy",Toast.LENGTH_SHORT);
-				}
-		    }
-	    }	    
+            if( REQUEST_CODE_PIN_OR_PASSWORD == requestCode && resultCode == Activity.RESULT_OK) {
+
+             Log.i(TAG, "Password/Pin has been set here ");
+             mPasswordHasBeenSet = true;
+
+            }
+
 	    UserHandle uh = Process.myUserHandle();
     	UserManager um = (UserManager) getSystemService(Context.USER_SERVICE);
    	    if(null != um) {
