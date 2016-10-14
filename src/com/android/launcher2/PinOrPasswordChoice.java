@@ -143,6 +143,11 @@ public class PinOrPasswordChoice extends Activity {
         }
     }
 */
+
+    @Override
+    public void onBackPressed() {
+    }
+
     private void setPin() {
       Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
       intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
