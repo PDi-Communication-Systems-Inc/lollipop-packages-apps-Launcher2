@@ -103,6 +103,16 @@ s -->
     <string name="title_select_shortcut">Choose shortcut</string>
     <!-- Title of dialog when user is selecting an application to add to homescreen -->
     <string name="title_select_application">Choose app</string>
+    <!-- Launcher Selection text -->
+    <string name="title_select_launcher">Please select one of the Launcher as your Home</string>
+    <!-- Default Launcher  -->
+    <string name="title_default_launcher"> Default Launcher (recommended Launcher from Google)    </string>
+    <!-- Default Launcher  -->
+    <string name="title_default_launcher_txt"> (Treditional Launcher ) </string>
+    <!-- Thirdparty  Launcher  -->
+    <string name="title_thirdparty_launcher"> Nova Launcher (Third party Launcher) </string>
+    <!-- Thirdparty  Launcher  -->
+    <string name="title_thirdparty_launcher_txt"> ( Third party Launcher )  </string>
 
     <!-- All applications label -->
     <string name="all_apps_button_label">Apps</string>

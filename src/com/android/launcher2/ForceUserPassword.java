@@ -64,6 +64,7 @@ public class ForceUserPassword extends Activity {
 	   button.setOnClickListener(btnListener);
 	   button.requestFocus();
 	
+           getApplicationContext().getPackageManager().clearPackagePreferredActivities("com.teslacoilsw.launcher");
 	   checkAndReturnResult();				
 		   
 	}
@@ -220,7 +221,10 @@ public class ForceUserPassword extends Activity {
 			} else {
 			    getParent().setResult(Activity.RESULT_OK, data);
 			}
-			finish();
+                Intent intent = new Intent(this, LauncherSelectionActivity.class);
+                Log.i(TAG, "SAGAR starting launcher selection");
+                startActivity(intent);
+        	finish();
 		}
 		return;
 	}

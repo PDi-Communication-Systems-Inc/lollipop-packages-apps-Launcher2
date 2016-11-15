@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="10dp"
+    android:paddingLeft="220dp"
+    android:paddingRight="30dp"
+    android:paddingTop="120dp">
+
+
+
+    <RadioGroup
+        android:id="@+id/chooseLauncher"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true">
+
+        <RadioButton
+            android:id="@+id/defaultLauncher"
+            android:layout_width="662dp"
+            android:layout_height="100dp"
+            android:background="#00000000"
+            android:ems="10"
+            android:textSize="35dp"
+            android:text="@string/title_default_launcher"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/thirdPartyLauncher"
+            android:layout_width="698dp"
+            android:layout_height="100dp"
+            android:background="#00000000"
+            android:ems="10"
+            android:textSize="35dp"
+            android:text="@string/title_thirdparty_launcher"
+            android:checked="false" />
+
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/btnContinue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.46"
+        android:textSize="33dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:text="@string/touch_here"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginEnd="57dp"
+        android:layout_below="@+id/chooseLauncher"
+        android:layout_alignEnd="@+id/chooseLauncher"
+        android:layout_marginTop="71dp" />
+
+</RelativeLayout>
+

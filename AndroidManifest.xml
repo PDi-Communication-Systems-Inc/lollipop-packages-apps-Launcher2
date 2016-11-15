@@ -183,6 +183,19 @@
             <meta-data android:name="android.wallpaper.preview"
                 android:resource="@xml/wallpaper_picker_preview" />
         </activity>
+
+        <activity
+            android:name="com.android.launcher2.LauncherSelectionActivity"
+            android:label="@string/application_name"
+            android:icon="@mipmap/ic_launcher_home"
+            android:finishOnCloseSystemDialogs="false"
+            android:enabled="true"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
                    <!--  End PDi Additions -->
                  
 
