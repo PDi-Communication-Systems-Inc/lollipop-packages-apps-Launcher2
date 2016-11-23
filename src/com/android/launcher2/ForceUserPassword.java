@@ -6,9 +6,13 @@ import java.lang.reflect.Method;
 import com.android.launcher.R;
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.pm.ActivityInfo;
 import android.app.AlertDialog;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
+import android.os.SystemProperties;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,10 +26,17 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
+import android.content.pm.ResolveInfo;
+import android.content.pm.PackageManager;
+import android.content.IntentFilter;
 
 import android.os.UserManager;
 import android.os.UserHandle;
 import android.os.Process;
+import java.util.List;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.*;
 
 public class ForceUserPassword extends Activity {
 
@@ -43,6 +54,7 @@ public class ForceUserPassword extends Activity {
     private static final long MS_PER_DAY = 24 * MS_PER_HOUR;
     
     private static final String TAG = "ForceUserPassword";
+    private static final String LauncherInfo = "patientsLauncher.txt";
     
 	
 	@Override
@@ -205,29 +217,147 @@ public class ForceUserPassword extends Activity {
           // startActivity(intent);
            return;
     }
+ 
+    /**
+      * returns the user id of the current process
+     */
+    protected Long getUser() {
+
+        UserHandle uh = Process.myUserHandle();
+        UserManager um = (UserManager) getSystemService(Context.USER_SERVICE);
+        Long userSerialNumber = um.getSerialNumberForUser(uh);
+        return userSerialNumber;
+    }
+
+private static ComponentName[] getActivitiesListByActionAndCategory (Context context, String action, String category) {
+   Intent queryIntent = new Intent(action);
+   queryIntent.addCategory(category);
+   List<ResolveInfo> resInfos = context.getPackageManager().queryIntentActivities(queryIntent, PackageManager.MATCH_DEFAULT_ONLY);
+   ComponentName[] componentNames = new ComponentName[resInfos.size()];
+   for (int i = 0; i < resInfos.size(); i++) {
+      ActivityInfo activityInfo = resInfos.get(i).activityInfo;
+      componentNames[i] = new ComponentName(activityInfo.packageName, activityInfo.name); }
+   return componentNames;
+}
+
+/**
+  * sets the third party launcher.
+  * Todo - need to remove the launcher pkgname com.teslacoilsw.launcher (pkg name) and com.teslacoilsw.launcher.NovaLauncher (activity name) and
+  * replace with Allan tech launcher in this code
+ */
+private void setThirdPartyLauncher(Context context) {
+   context.getPackageManager().clearPackagePreferredActivities("com.android.launcher");
+
+   ComponentName defaultLauncherCmp = new ComponentName("com.android.launcher", "com.android.launcher2.Launcher");
+   PackageManager p = context.getPackageManager();
+   p.setComponentEnabledSetting(defaultLauncherCmp, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+
+   ComponentName cN = new ComponentName("com.teslacoilsw.launcher", "com.teslacoilsw.launcher.NovaLauncher");
+
+   IntentFilter filter = new IntentFilter(Intent.ACTION_MAIN);
+   filter.addCategory(Intent.CATEGORY_HOME);
+   filter.addCategory(Intent.CATEGORY_DEFAULT);
+   ComponentName[] currentHomeActivities = getActivitiesListByActionAndCategory(context, Intent.ACTION_MAIN, Intent.CATEGORY_HOME);
+   ComponentName newPreferredActivity = new ComponentName("com.teslacoilsw.launcher", "com.teslacoilsw.launcher.NovaLauncher");
+   context.getPackageManager().addPreferredActivity(filter, IntentFilter.MATCH_CATEGORY_EMPTY, currentHomeActivities, newPreferredActivity);
+
+   p.setComponentEnabledSetting(cN, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+
+   Intent launchIntent = new Intent();
+   launchIntent.setClassName("com.teslacoilsw.launcher", "com.teslacoilsw.launcher.NovaLauncher");
+   launchIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+   launchIntent.addCategory(Intent.CATEGORY_HOME);
+   launchIntent.addCategory(Intent.CATEGORY_DEFAULT);
+   launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+   context.startActivityAsUser(launchIntent, UserHandle.CURRENT);
+   p.setComponentEnabledSetting(cN, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT, PackageManager.DONT_KILL_APP);
+
+   finish();
+}
+
+
+/**
+  * sets the default launcher.
+  * Todo - need to remove the launcher pkgname com.teslacoilsw.launcher and
+  * replace with Allan tech launcher in this code
+ */
+private void setDefaultLauncher(Context context) {
+   context.getPackageManager().clearPackagePreferredActivities("com.teslacoilsw.launcher");
+
+   IntentFilter filter = new IntentFilter(Intent.ACTION_MAIN);
+   filter.addCategory(Intent.CATEGORY_HOME);
+   filter.addCategory(Intent.CATEGORY_DEFAULT);
+   ComponentName[] currentHomeActivities = getActivitiesListByActionAndCategory(context, Intent.ACTION_MAIN, Intent.CATEGORY_HOME);
+   ComponentName newPreferredActivity = new ComponentName("com.android.launcher", "com.android.launcher2.Launcher");
+   context.getPackageManager().addPreferredActivity(filter, IntentFilter.MATCH_CATEGORY_EMPTY, currentHomeActivities, newPreferredActivity);
+   finish();
+}
+
+
+/* returns the package name of the launcher which is set by owner for patients account */
+public  String getPatientsLauncher() {
+ File dirLauncher = getObbDir();
+ BufferedReader reader = null;
+ String pkgName = "";
+ StringBuilder sb = new StringBuilder();
+ try {
+
+    File file = new File(dirLauncher, LauncherInfo);
+    reader = new BufferedReader(new FileReader(file));
+
+    pkgName = reader.readLine();
+    Log.i(TAG,"SAGAR pkg name - "+pkgName);
+    System.out.println(pkgName);
+    reader.close();
+    return pkgName;
+  } catch (IOException e) {
+      e.printStackTrace();
+      Log.e(TAG,"Error in Reading launcher selection for patients ");
+ } finally {
+     try {
+         if ( reader != null ) {
+              reader.close();
+         }
+     }  catch (IOException e) {
+             Log.e(TAG,"Error in closing the BufferedReader");
+     }
+   }
+ return pkgName;
+}
+
 	
-	protected void checkAndReturnResult()
+protected void checkAndReturnResult()
+{
+//Verify password has been set
+   Log.i(TAG, mPasswordHasBeenSet ? "Password has been set" : 
+   "Password has not been set");
+	if(mPasswordHasBeenSet)
 	{
-		//Verify password has been set
-    	Log.i(TAG, mPasswordHasBeenSet ? "Password has been set" : 
-                "Password has not been set");
-		if(mPasswordHasBeenSet)
-		{
-			Intent data = this.getIntent();
-			data.putExtra("PASSWORD", "SET");
-			
-			if (getParent() == null) {
-			    setResult(Activity.RESULT_OK, data);
-			} else {
-			    getParent().setResult(Activity.RESULT_OK, data);
-			}
-                Intent intent = new Intent(this, LauncherSelectionActivity.class);
-                Log.i(TAG, "SAGAR starting launcher selection");
-                startActivity(intent);
-        	finish();
-		}
-		return;
-	}
+	   Intent data = this.getIntent();
+	   data.putExtra("PASSWORD", "SET");
+           if (getParent() == null) {
+	       setResult(Activity.RESULT_OK, data);
+	   } else {
+	       getParent().setResult(Activity.RESULT_OK, data);
+           }
+
+           if(getUser() == 0) {
+              Intent intent = new Intent(this, LauncherSelectionActivity.class);
+              startActivity(intent);
+           } else {
+                String launcherPkg = getPatientsLauncher();
+                if(launcherPkg != null && launcherPkg.equals("com.teslacoilsw.launcher")) {
+                   Log.i(TAG, "Setting launcher  nova");
+                   setThirdPartyLauncher(getApplicationContext());
+                } else {
+                    Log.i(TAG, "Setting standard launcher");
+                    setDefaultLauncher(getApplicationContext());
+                }
+             }
+             finish();
+         }
+	return;
+}
 	
 
 	@Override
