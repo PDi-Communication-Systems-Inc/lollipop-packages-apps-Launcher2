@@ -306,7 +306,7 @@ public  String getPatientsLauncher() {
     reader = new BufferedReader(new FileReader(file));
 
     pkgName = reader.readLine();
-    Log.i(TAG,"SAGAR pkg name - "+pkgName);
+    Log.i(TAG,"pkg name - "+pkgName);
     System.out.println(pkgName);
     reader.close();
     return pkgName;

@@ -49,6 +49,10 @@ import java.io.FileWriter;
 import java.io.BufferedWriter;
 import java.io.*;
 
+/*
+   LauncherSelectionActivity - selection of the launcher is done here.
+   Owner sets the launcher for the patients account.
+ */
 public class LauncherSelectionActivity extends Activity {
 
 
@@ -67,6 +71,9 @@ private static final String LauncherInfo = "patientsLauncher.txt";
         addListenerOnButton();
 }
 
+/*
+  Saves the launcher package name in the OBB directory
+ */
 private void saveLaunchersetting(String pkgName) {
  File dirLauncher = getObbDir();
  File file = new File(dirLauncher, LauncherInfo);
@@ -90,13 +97,20 @@ private void saveLaunchersetting(String pkgName) {
    }
 }
 
-
+/*
+  saves the third party launcher information for Patient's account
+  -This will be the default launcher for the Patients when they log in after setting the password
+ */
 private void setThirdPartyLauncher() {
 Log.i(TAG,"setThirdPartyLauncher() for patients ");
 saveLaunchersetting("com.teslacoilsw.launcher");
 finish();
 }
 
+/*
+  saves the default launcher information for Patient's account
+  -This will be the default launcher for the Patients when they log in after setting the password
+ */
 private void setDefaultLauncher() {
 Log.i(TAG,"setDefaultLauncher() for patients ");
 saveLaunchersetting("com.android.launcher");
