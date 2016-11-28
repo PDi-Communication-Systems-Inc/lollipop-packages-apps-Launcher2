@@ -8,13 +8,24 @@
     android:paddingTop="120dp">
 
 
+    <TextView
+        android:layout_width="1349dp"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="@string/setLauncherText"
+        android:ems="10"
+        android:id="@+id/editText4"
+        android:textSize="44dp"
+        android:textColor="#FF0000"
+        android:paddingTop="0dp"
+        android:gravity="top">
+    </TextView>
 
     <RadioGroup
         android:id="@+id/chooseLauncher"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true">
+        android:paddingTop="50dp">
 
         <RadioButton
             android:id="@+id/defaultLauncher"

@@ -106,7 +106,7 @@ s -->
     <!-- Launcher Selection text -->
     <string name="title_select_launcher">Please select one of the Launcher as your Home</string>
     <!-- Default Launcher  -->
-    <string name="title_default_launcher"> Default Launcher (recommended Launcher from Google)    </string>
+    <string name="title_default_launcher"> Default Launcher2 (This Launcher is from Google)    </string>
     <!-- Default Launcher  -->
     <string name="title_default_launcher_txt"> (Treditional Launcher ) </string>
     <!-- Thirdparty  Launcher  -->
@@ -304,6 +304,8 @@ s -->
     <string name="pinterest">Pinterest</string>
     <string name="usePin">Use PIN</string>
     <string name="usePassword">Use Password</string>
+    <string name="choosePinPass">Please set your PIN or Passsword for your account</string>
+    <string name="setLauncherText">Please set Default launcher for Patient\'s Account</string>
     <string name="nxsteps_training">Training</string>
     <string name="todo">TODO</string>
 <!-- End PDi Additions -->
