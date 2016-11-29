@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
- android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="10dp"
-    android:paddingLeft="220dp"
-    android:paddingRight="30dp"
-    android:paddingTop="120dp">
+    android:paddingBottom="0dp"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:paddingTop="0dp">
 
 
     <TextView
@@ -18,52 +18,86 @@
         android:textSize="44dp"
         android:textColor="#FF0000"
         android:paddingTop="0dp"
-        android:gravity="top">
+        android:gravity="top"
+        android:paddingLeft="120dp"
+        android:layout_marginTop="2dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_weight="1">
+
+
     </TextView>
-
-    <RadioGroup
-        android:id="@+id/chooseLauncher"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingTop="50dp">
-
-        <RadioButton
-            android:id="@+id/defaultLauncher"
-            android:layout_width="662dp"
-            android:layout_height="100dp"
-            android:background="#00000000"
-            android:ems="10"
-            android:textSize="35dp"
-            android:text="@string/title_default_launcher"
-            android:checked="true" />
-
-        <RadioButton
-            android:id="@+id/thirdPartyLauncher"
-            android:layout_width="698dp"
-            android:layout_height="100dp"
-            android:background="#00000000"
-            android:ems="10"
-            android:textSize="35dp"
-            android:text="@string/title_thirdparty_launcher"
-            android:checked="false" />
-
-    </RadioGroup>
 
     <Button
         android:id="@+id/btnContinue"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1.46"
-        android:textSize="33dp"
+        android:textSize="44dp"
         android:textColor="#FF0000"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:text="@string/touch_here"
         android:layout_gravity="center_horizontal"
-        android:layout_marginEnd="57dp"
+        android:layout_marginEnd="241dp"
+        android:layout_marginTop="61dp"
         android:layout_below="@+id/chooseLauncher"
-        android:layout_alignEnd="@+id/chooseLauncher"
-        android:layout_marginTop="71dp" />
+        android:layout_alignParentEnd="true" />
+
+    <RadioGroup
+        android:id="@+id/chooseLauncher"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:paddingTop="5dp"
+        android:layout_below="@+id/editText4"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="80dp">
+
+
+
+        <RadioButton
+            android:id="@+id/defaultLauncher"
+            android:layout_width="925dp"
+            android:layout_height="100dp"
+            android:background="#00000000"
+            android:ems="10"
+            android:textSize="35dp"
+            android:paddingBottom="0dp"
+            android:text="@string/title_default_launcher"
+            android:checked="true" />
+
+        <TextView
+            android:text="@string/title_default_launcher_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView"
+            android:paddingLeft="0dp"
+            android:textSize="20dp"
+            android:textColor="#FFFFFF"
+            android:layout_weight="1" />
+
+        <RadioButton
+            android:id="@+id/thirdPartyLauncher"
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:paddingTop="0dp"
+            android:background="#00000000"
+            android:ems="10"
+            android:textSize="35dp"
+            android:text="@string/title_thirdparty_launcher"
+            android:checked="false" />
+        <TextView
+            android:text="@string/title_thirdparty_launcher_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView1"
+            android:paddingLeft="0dp"
+            android:textColor="#FFFFFF"
+            android:textSize="20dp" />
+
+    </RadioGroup>
 
 </RelativeLayout>
+
 
