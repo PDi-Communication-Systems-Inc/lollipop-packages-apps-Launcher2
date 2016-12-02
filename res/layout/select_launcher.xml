@@ -16,8 +16,8 @@
         android:ems="10"
         android:id="@+id/editText4"
         android:textSize="44dp"
-        android:textColor="#FF0000"
         android:paddingTop="0dp"
+        android:textColor="#0000CD"
         android:gravity="top"
         android:paddingLeft="120dp"
         android:layout_marginTop="2dp"
@@ -30,19 +30,16 @@
 
     <Button
         android:id="@+id/btnContinue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1.46"
-        android:textSize="44dp"
-        android:textColor="#FF0000"
+        android:layout_width="400sp"
+        android:layout_height="105dp"
+        android:text="@string/touch_here_space"
+        android:textSize="40sp"
         android:focusable="true"
         android:focusableInTouchMode="true"
-        android:text="@string/touch_here"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginEnd="241dp"
-        android:layout_marginTop="61dp"
-        android:layout_below="@+id/chooseLauncher"
-        android:layout_alignParentEnd="true" />
+        android:layout_marginEnd="80dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="92dp" />
 
     <RadioGroup
         android:id="@+id/chooseLauncher"

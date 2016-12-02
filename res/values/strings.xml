@@ -294,6 +294,7 @@ Patient\'s can play various games, listen to music. This launcher is recommended
     <string name="choose_password">Step 1 - Secure your personal data - choose a password for yourself</string>
     <string name="home_screen">Step 2 - Device Setup - Device will configure itself and take you to the home screen</string>
     <string name="touch_here">Continue</string>
+    <string name="touch_here_space">     Continue      </string>
     <string name="change_language">Change Language</string>
     <string name="food_analyzer">Food Analyzer</string>
     <string name="kidney_smart">Kidney Smart</string>
