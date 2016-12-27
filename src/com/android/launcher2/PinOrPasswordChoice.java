@@ -287,7 +287,7 @@ public class PinOrPasswordChoice extends Activity {
                                 else // password is sufficient                                  
                                 {
                                         mPasswordHasBeenSet= true;
-                                        ShowToast( "pin Successfully Changed",Toast.LENGTH_SHORT);
+                                        ShowToast( "Pin Successfully Changed",Toast.LENGTH_SHORT);
                                 }
                     }
                     else // if user chose cancelled from password change
