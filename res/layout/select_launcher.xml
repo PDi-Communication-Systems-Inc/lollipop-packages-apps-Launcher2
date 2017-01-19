@@ -54,18 +54,18 @@
 
 
         <RadioButton
-            android:id="@+id/defaultLauncher"
+            android:id="@+id/thirdPartyLauncher"
             android:layout_width="925dp"
             android:layout_height="100dp"
             android:background="#00000000"
             android:ems="10"
             android:textSize="35dp"
             android:paddingBottom="0dp"
-            android:text="@string/title_default_launcher"
+            android:text="@string/title_thirdparty_launcher"
             android:checked="true" />
 
         <TextView
-            android:text="@string/title_default_launcher_txt"
+            android:text="@string/title_thirdparty_launcher_txt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textView"
@@ -75,17 +75,18 @@
             android:layout_weight="1" />
 
         <RadioButton
-            android:id="@+id/thirdPartyLauncher"
+            android:id="@+id/defaultLauncher"
             android:layout_width="match_parent"
             android:layout_height="70dp"
             android:paddingTop="0dp"
             android:background="#00000000"
             android:ems="10"
             android:textSize="35dp"
-            android:text="@string/title_thirdparty_launcher"
+            android:text="@string/title_default_launcher"
             android:checked="false" />
         <TextView
-            android:text="@string/title_thirdparty_launcher_txt"
+            android:text="@string/title_default_launcher_txt"
+
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textView1"
