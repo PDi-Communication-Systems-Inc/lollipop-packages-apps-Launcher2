@@ -405,13 +405,13 @@ public final class Launcher extends Activity
    
     private void acquireWakeLock() {
     	fullWakeLock.acquire();
-    	Log.i(TAG, "A full wakelock was acquired");
+    	if (DEBUG) Log.d(TAG, "A full wakelock was acquired");
     }
     
     private void releaseWakeLock() {
     	// sanity check for null
         if (fullWakeLock != null) {
-            Log.i(TAG, "Releasing full wakelock");
+            if (DEBUG) Log.d(TAG, "Releasing full wakelock");
             try {
             	fullWakeLock.release();
             } catch (Throwable th) {
@@ -425,13 +425,13 @@ public final class Launcher extends Activity
     
     private void acquirePartialWakeLock() {
     	partialWakeLock.acquire();  
-    	Log.i(TAG, "A partial wakelock was acquired");
+    	if (DEBUG) Log.d(TAG, "A partial wakelock was acquired");
     }
     
     private void releasePartialWakeLock() {
     	// sanity check for null
         if (partialWakeLock != null) {
-            Log.i(TAG, "Releasing partialwakelock");
+            if (DEBUG) Log.d(TAG, "Releasing partialwakelock");
             try {
             	partialWakeLock.release();
             } catch (Throwable th) {
@@ -452,7 +452,7 @@ public final class Launcher extends Activity
     	    PackageInfo p = m.getPackageInfo(s, 0);
     	    dataDir = p.applicationInfo.dataDir;
     	} catch (NameNotFoundException e) {
-    	    Log.w(TAG, "Error Package name not found ", e);
+    	    Log.e(TAG, "Error Package name not found ", e);
     	}
     	return dataDir;
     }
@@ -590,16 +590,8 @@ public final class Launcher extends Activity
         
         //Wake lock level: Ensures that the CPU is running; the screen and keyboard backlight will be allowed to go off. 
         partialWakeLock = powerManager.newWakeLock((PowerManager. PARTIAL_WAKE_LOCK), "Launcher - Partial WAKE LOCK");
-        //Acquire Partial Wakelock
-        acquirePartialWakeLock();        
-        
-        //Start - adds for overscan hard coded fix
-        //mDisplayManager = (DisplayManager)getSystemService(Context.DISPLAYMANAGER_SERVICE);
-        //for(int i=0; i<MAX_DISPLAY_DEVICE; i++ ) {                        
-        //    mDisplayManager.setDisplayXOverScan(i, 4);                   
-        //    mDisplayManager.setDisplayYOverScan(i, 6);
-        //}
-        //End - adds for overscan hard coded fix 
+
+        // End - PDi Changes
         
         //Start - Do not show clings
         //DismissCling(Cling.WORKSPACE_CLING_DISMISSED_KEY); //-- TODO: not refreshed
@@ -889,10 +881,10 @@ public final class Launcher extends Activity
         if (requestCode == REQUEST_RESTORE_WIFI) 
         {	
         	Boolean l_isdeviceMasterOrSlaveConfiguredCalled = false;
-        	Log.i(TAG, "requestCode == REQUEST_RESTORE_WIFI");
+        	if (DEBUG) Log.d(TAG, "requestCode == REQUEST_RESTORE_WIFI");
         	if (resultCode == RESULT_OK)
         	{ 
-        		Log.i(TAG, "resultCode == RESULT_OK from REQUEST_RESTORE_WIFI");
+        		if (DEBUG) Log.i(TAG, "resultCode == RESULT_OK from REQUEST_RESTORE_WIFI");
         		//check for wifi restore
         		String param_file="";
         		Bundle extras = data.getExtras();
@@ -901,17 +893,17 @@ public final class Launcher extends Activity
         		}
         		if ((param_file != null) && (param_file.compareTo("SAVED") == 0))
         		{  
-        			Log.i(TAG, "Extras from returnresult says that wifi file was saved");        			
+        			if (DEBUG) Log.d(TAG, "Extras from returnresult says that wifi file was saved");        			
 			    	WifiManager wifiManager ;
 		    		wifiManager  = (WifiManager)getSystemService(WIFI_SERVICE);
 		    		//check if we are connected to any network
 		    		if (!isConnectedOrConnectingToAny(getApplicationContext()))
 		    		{
-		    			Log.i(TAG, "Not connected to any network - implies ethernet is not present"); 
-		    			Log.i(TAG, "Will setWifiEnabled to true");		    				    		
+		    			if (DEBUG) Log.d(TAG, "Not connected to any network - implies ethernet is not present"); 
+		    			if (DEBUG) Log.d(TAG, "Will setWifiEnabled to true");		    				    		
 			    		if(wifiManager.setWifiEnabled(true))
 			    		{
-			    			Log.i(TAG,"setWifiEnabled has been set to true. Note that it may take while to connect to the network.");
+			    			if (DEBUG) Log.d(TAG,"setWifiEnabled has been set to true. Note that it may take while to connect to the network.");
 			    			
 			    			/*Intent updateWidgetIntent = new Intent();
 							updateWidgetIntent.setComponent(new ComponentName("org.androidappdev.wifiwidget","org.androidappdev.wifiwidget.WifiAppWidgetProvider"));
@@ -926,8 +918,8 @@ public final class Launcher extends Activity
         			}
 	        		else
 	        		{
-	        			Log.i(TAG, "Connected to any network - implies ethernet is present"); 
-		    			Log.i(TAG, "Will not call setWifiEnabled to true");	
+	        			if (DEBUG) Log.d(TAG, "Connected to any network - implies ethernet is present"); 
+		    			if (DEBUG) Log.d(TAG, "Will not call setWifiEnabled to true");	
 	        		}       			
         		}  
         		else
@@ -939,7 +931,7 @@ public final class Launcher extends Activity
     		
 			//In all cases call the restore function
 			//will try to invoke RestoreMasterOrSlaveConfiguration anyways - so that backup file can be used
-			Log.i(TAG,"Calling function RestoreMasterOrSlaveConfiguration");
+			if (DEBUG) Log.d(TAG,"Calling function RestoreMasterOrSlaveConfiguration");
 	//		l_isdeviceMasterOrSlaveConfiguredCalled = RestoreMasterOrSlaveConfiguration();		
 
         	
@@ -1915,7 +1907,7 @@ public final class Launcher extends Activity
         try {
             mAppWidgetHost.stopListening();
         } catch (NullPointerException ex) {
-            Log.w(TAG, "problem while stopping AppWidgetHost during Launcher destruction", ex);
+            Log.e(TAG, "problem while stopping AppWidgetHost during Launcher destruction", ex);
         }
         mAppWidgetHost = null;
 
@@ -2295,9 +2287,12 @@ public final class Launcher extends Activity
 
     @Override
     public void onBackPressed() {
+        if (DEBUG) Log.d(TAG, "onBackPressed()");
         if (isAllAppsVisible()) {
+            if (DEBUG) Log.d(TAG, "onBackPressed(): all apps visible, show workspace");
             showWorkspace(true);
         } else if (mWorkspace.getOpenFolder() != null) {
+            if (DEBUG) Log.d(TAG, "onBackPressed(): working with folder");
             Folder openFolder = mWorkspace.getOpenFolder();
             if (openFolder.isEditingName()) {
                 openFolder.dismissEditingName();
@@ -2305,6 +2300,7 @@ public final class Launcher extends Activity
                 closeFolder();
             }
         } else {
+            if (DEBUG) Log.d(TAG, "onBackPressed(): no-op");
             mWorkspace.exitWidgetResizeMode();
 
             // Back button is a no-op here, but give at least some feedback for the button press
@@ -2546,8 +2542,8 @@ public final class Launcher extends Activity
         // If the folder info reports that the associated folder is open, then verify that
         // it is actually opened. There have been a few instances where this gets out of sync.
         if (info.opened && openFolder == null) {
-            Log.d(TAG, "Folder info marked as open, but associated folder is not open. Screen: "
-                    + info.screen + " (" + info.cellX + ", " + info.cellY + ")");
+            if (DEBUG) Log.d(TAG, "Folder info marked as open, but associated folder is not open. Screen: "
+                                  + info.screen + " (" + info.cellX + ", " + info.cellY + ")");
             info.opened = false;
         }
 
@@ -3690,7 +3686,7 @@ public final class Launcher extends Activity
      */
     private boolean waitUntilResume(Runnable run, boolean deletePreviousRunnables) {
         if (mPaused) {
-            Log.i(TAG, "Deferring update until onResume");
+            if (DEBUG) Log.d(TAG, "Deferring update until onResume");
             if (deletePreviousRunnables) {
                 while (mOnResumeCallbacks.remove(run)) {
                 }
@@ -3722,7 +3718,7 @@ public final class Launcher extends Activity
      */
     public boolean setLoadOnResume() {
         if (mPaused) {
-            Log.i(TAG, "setLoadOnResume");
+            if (DEBUG) Log.d(TAG, "setLoadOnResume");
             mOnResumeNeedsLoad = true;
             return true;
         } else {
