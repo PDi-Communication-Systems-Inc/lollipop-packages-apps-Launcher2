@@ -384,7 +384,7 @@ protected void checkAndReturnResult()
               Intent intent = new Intent(this, PinOrPasswordChoice.class);
               startActivity(intent);
            } else {
-                   Log.i(TAG, "Setting MEDTV Launcher for patient account");
+                   Log.i(TAG, "Setting AOSP Launcher for patient account");
                    setDefaultLauncher(getApplicationContext());
              }
              finish();
