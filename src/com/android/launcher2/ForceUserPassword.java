@@ -337,18 +337,18 @@ private void setDefaultLauncher(Context context) {
 public  String getChoicePinorPwd() {
  File dirLauncher = getObbDir();
  BufferedReader reader = null;
- String pkgName = "";
+ String pinOrPwdChoice = "";
  StringBuilder sb = new StringBuilder();
  try {
 
     File file = new File(dirLauncher, PatientsPinPwd);
     reader = new BufferedReader(new FileReader(file));
 
-    pkgName = reader.readLine();
-    Log.i(TAG,"pin/pwd - "+pkgName);
-    System.out.println(pkgName);
+    pinOrPwdChoice = reader.readLine();
+    Log.i(TAG,"pin/pwd - "+pinOrPwdChoice);
+    System.out.println(pinOrPwdChoice);
     reader.close();
-    return pkgName;
+    return pinOrPwdChoice;
   } catch (IOException e) {
       e.printStackTrace();
       Log.e(TAG,"Error in Reading pin/pwd selection for patients ");
