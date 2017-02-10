@@ -298,6 +298,7 @@ Patient\'s can play various games, listen to music. This launcher is recommended
     <string name="home_screen">Step 2 - Device Setup - Device will configure itself and take you to the home screen</string>
     <string name="touch_here">Continue</string>
     <string name="touch_here_space">     Continue      </string>
+    <string name="finish_here_space">     Finish       </string>
     <string name="change_language">Change Language</string>
     <string name="food_analyzer">Food Analyzer</string>
     <string name="kidney_smart">Kidney Smart</string>
@@ -312,10 +313,10 @@ Patient\'s can play various games, listen to music. This launcher is recommended
     <string name="usePassword">Use Password</string>
     <string name="choosePinPass">Please choose PIN or Passsword for the Patient\'s account</string>
     <string name="setLauncherText">Please set Default launcher for Patient\'s Account</string>
-    <string name="pinText"> Using PIN option set the personal identifcation number for Patient\'s account. PIN is set as numeric value.
-   Once you choose PIN as a choice then any new patient\'s has to create their own PIN and use this PIN to unlock the account. </string>
-    <string name="passwordText"> Using Password option set the password for the Patient\'s account. Please enter a password containing at least both> numeric and alphabetic (or other symbol) characters.
-   Once you choose password as a choice then any new patient\'s has to create their own password and use this password to unlock the account. </string>
+    <string name="pinText"> By selecting PIN option, Patient\'s have to set the personal identifcation number for their individual account. PIN is set as numeric value.
+   Patient\'s will use their PIN to unlock the individual account. </string>
+    <string name="passwordText"> By selecting password option, Patient\'s have to set the password for their individual account. 
+   password is set as at least both> numeric and alphabetic (or other symbol) characters. Patient\'s will use their password to unlock the individual account. </string>
     <string name="nxsteps_training">Training</string>
     <string name="todo">TODO</string>
 <!-- End PDi Additions -->
