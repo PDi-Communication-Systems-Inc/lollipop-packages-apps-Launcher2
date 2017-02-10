@@ -48,13 +48,16 @@ public class ForceUserPassword extends Activity {
     private static final int REQUEST_CODE_ENABLE_ADMIN = 1;
     private static final int REQUEST_CODE_RESET_PASSWORD = 2;
     private static final int REQUEST_CODE_PIN_OR_PASSWORD = 11;
+    private static final int REQUEST_CODE_PIN = 12;
+    private static final int REQUEST_CODE_PASSWORD = 13;
     
     private static final long MS_PER_MINUTE = 60 * 1000;
     private static final long MS_PER_HOUR = 60 * MS_PER_MINUTE;
     private static final long MS_PER_DAY = 24 * MS_PER_HOUR;
     
     private static final String TAG = "ForceUserPassword";
-    private static final String LauncherInfo = "patientsLauncher.txt";
+    private static final String PatientsPinPwd = "patientsPinPwd.txt";
+
     
 	
 	@Override
@@ -69,8 +72,13 @@ public class ForceUserPassword extends Activity {
            mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
            mDeviceAdmin = new ComponentName(this, DeviceAdminSampleReceiver.class);
         
-	   setContentView(R.layout.force_user_password);
-		
+	   if(getUser() == 0 )
+           {
+             setContentView(R.layout.force_user_password_owner);
+           } else {
+             setContentView(R.layout.force_user_password_patient);
+           }
+
 	   // Capture our button from layout
 	   final Button button = (Button)findViewById(R.id.button1);
 	   button.setOnClickListener(btnListener);
@@ -144,10 +152,40 @@ public class ForceUserPassword extends Activity {
 		
 	}
 	
+
+        /* sets password for the Owner account or
+           sets the pin/password for the Patient's account */
 	private void resetPassword()
 	{
-                Intent intent = new Intent(this, PinOrPasswordChoice.class);
-                startActivityForResult(intent, REQUEST_CODE_PIN_OR_PASSWORD);
+                if( getUser() == 0 ) {
+                    Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
+                    intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC);
+                    startActivityForResult(intent, REQUEST_CODE_PIN_OR_PASSWORD);
+                    Log.i(TAG, "Setting password for Owner account");
+                } else {
+                    String pinOrPwd = getChoicePinorPwd();
+                    if(pinOrPwd != null && pinOrPwd.equals("PIN")) {
+                        mDPM.setPasswordQuality(mDeviceAdmin, DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
+                        mDPM.setPasswordMinimumLength(mDeviceAdmin, 4);
+                        mDPM.setMaximumTimeToLock(mDeviceAdmin, 30 * MS_PER_MINUTE);
+
+                        Log.i(TAG, "Setting PIN for patient account");
+                        Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
+                        intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
+                        startActivityForResult(intent, REQUEST_CODE_PIN);
+
+                     } else {
+                         mDPM.setPasswordQuality(mDeviceAdmin, DevicePolicyManager.PASSWORD_QUALITY_ALPHANUMERIC);
+                         mDPM.setPasswordMinimumLength(mDeviceAdmin, 4); //changed from 6 to 4 - NIH feedback
+                         mDPM.setMaximumTimeToLock(mDeviceAdmin, 30 * MS_PER_MINUTE);
+
+                         Log.i(TAG, "Setting password for patient account");
+                         Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
+                         intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC);
+                         startActivityForResult(intent, REQUEST_CODE_PASSWORD);
+
+                     }
+                }
 	}
 	
 	private void showOKDialog(String message,String title)
@@ -170,6 +208,7 @@ public class ForceUserPassword extends Activity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	    super.onActivityResult(requestCode, resultCode, data);
 	    //TODO handle here. 
+            Log.i(TAG,"SAGAR requestCode - "+requestCode +"resultCode - " +resultCode);
 	    
 	    if (REQUEST_CODE_ENABLE_ADMIN == requestCode)
 	    {
@@ -186,15 +225,15 @@ public class ForceUserPassword extends Activity {
 		    	ShowToast( "Device Admin must be Activated to continue!",Toast.LENGTH_SHORT);    			    					
 		    }
 	    }
-            if( REQUEST_CODE_PIN_OR_PASSWORD == requestCode && resultCode == Activity.RESULT_OK) {
+            if((REQUEST_CODE_PIN == requestCode || REQUEST_CODE_PASSWORD ==requestCode || REQUEST_CODE_PIN_OR_PASSWORD == requestCode) ) {
 
-             Log.i(TAG, "Password/Pin has been set here ");
+             Log.i(TAG, "Password/Pin has been set ");
              mPasswordHasBeenSet = true;
 
             }
 
 	    UserHandle uh = Process.myUserHandle();
-    	UserManager um = (UserManager) getSystemService(Context.USER_SERVICE);
+    	    UserManager um = (UserManager) getSystemService(Context.USER_SERVICE);
    	    if(null != um) {
               long userSerialNumber = um.getSerialNumberForUser(uh);
               Log.d(TAG, "userSerialNumber = " + userSerialNumber);
@@ -294,25 +333,25 @@ private void setDefaultLauncher(Context context) {
 }
 
 
-/* returns the package name of the launcher which is set by owner for patients account */
-public  String getPatientsLauncher() {
+/* returns the pin/password choice set by owner for patients account */
+public  String getChoicePinorPwd() {
  File dirLauncher = getObbDir();
  BufferedReader reader = null;
  String pkgName = "";
  StringBuilder sb = new StringBuilder();
  try {
 
-    File file = new File(dirLauncher, LauncherInfo);
+    File file = new File(dirLauncher, PatientsPinPwd);
     reader = new BufferedReader(new FileReader(file));
 
     pkgName = reader.readLine();
-    Log.i(TAG,"pkg name - "+pkgName);
+    Log.i(TAG,"pin/pwd - "+pkgName);
     System.out.println(pkgName);
     reader.close();
     return pkgName;
   } catch (IOException e) {
       e.printStackTrace();
-      Log.e(TAG,"Error in Reading launcher selection for patients ");
+      Log.e(TAG,"Error in Reading pin/pwd selection for patients ");
  } finally {
      try {
          if ( reader != null ) {
@@ -342,17 +381,11 @@ protected void checkAndReturnResult()
            }
 
            if(getUser() == 0) {
-              Intent intent = new Intent(this, LauncherSelectionActivity.class);
+              Intent intent = new Intent(this, PinOrPasswordChoice.class);
               startActivity(intent);
            } else {
-                String launcherPkg = getPatientsLauncher();
-                if(launcherPkg != null && launcherPkg.equals("com.allentek.abe")) {
-                   Log.i(TAG, "Setting launcher  nova");
+                   Log.i(TAG, "Setting MEDTV Launcher for patient account");
                    setThirdPartyLauncher(getApplicationContext());
-                } else {
-                    Log.i(TAG, "Setting standard launcher");
-                    setDefaultLauncher(getApplicationContext());
-                }
              }
              finish();
          }

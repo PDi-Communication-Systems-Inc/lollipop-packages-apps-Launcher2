@@ -27,6 +27,9 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.*;
 import android.os.UserManager;
 import android.os.UserHandle;
 import android.os.Process;
@@ -48,6 +51,7 @@ public class PinOrPasswordChoice extends Activity {
     private static final long MS_PER_MINUTE = 60 * 1000;
     private static final long MS_PER_HOUR = 60 * MS_PER_MINUTE;
     private static final long MS_PER_DAY = 24 * MS_PER_HOUR;
+    private static final String PatientsPinPwd = "patientsPinPwd.txt";
 
 
     @Override
@@ -148,40 +152,45 @@ public class PinOrPasswordChoice extends Activity {
     public void onBackPressed() {
     }
 
-    private void setPin() {
-      Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
-      intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
-      startActivityForResult(intent, REQUEST_CODE_RESET_PIN);
+    /* saves pin or password setting from the owner account */
+    private void savePinPwdSetting(String pinPwd) {
+       BufferedWriter output = null;
+       File dirLauncher = getObbDir();
+       Log.i(TAG,"creating directory - "+ dirLauncher.getAbsolutePath());
+       dirLauncher.mkdir();
+       File file = new File(dirLauncher, PatientsPinPwd);
+
+       try {
+         Log.i(TAG,"creating file - "+ file.getAbsolutePath());
+         file.createNewFile();
+         output = new BufferedWriter(new FileWriter(file));
+         output.write(pinPwd);
+         Log.i(TAG,"Made the pin/pwd selection as - "+ pinPwd);
+       } catch (IOException e) {
+           e.printStackTrace();
+           Log.e(TAG,"Error in writing launcher selection for patients ");
+       } finally {
+            try {
+                if ( output != null ) {
+                     output.close();
+                }
+            }  catch (IOException e) {
+                  Log.e(TAG,"Error in closing the BufferedWriter");
+            }
+      }
     }
 
-    private void setPassword() {
-       Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
-       intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC);
-       startActivityForResult(intent, REQUEST_CODE_RESET_PASSWORD);
+    /* Save the PIN choice for the Patient's account */
+    private void choosePinForPatient() {
+           savePinPwdSetting("PIN");
+           finish();
     }
 
-
-        private void setAdminRules(int pinOrPassword)
-        {
-                try
-                {
-                        //TODO: Make these configurable
-                        if( pinOrPassword == REQUEST_CODE_RESET_PIN ) {
-                            mDPM.setPasswordQuality(mDeviceAdmin, DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
-                        mDPM.setPasswordMinimumLength(mDeviceAdmin, 4); //changed from 6 to 4 - NIH feedback
-                        } else {
-                            mDPM.setPasswordQuality(mDeviceAdmin, DevicePolicyManager.PASSWORD_QUALITY_ALPHANUMERIC);
-                            mDPM.setPasswordMinimumLength(mDeviceAdmin, 4); //changed from 6 to 4 - NIH feedback
-                        }
-                        mDPM.setMaximumTimeToLock(mDeviceAdmin, 30 * MS_PER_MINUTE); //maximum lock time (after sleep) that can be set by the user
-                        //mDPM.setMaximumFailedPasswordsForWipe(mDeviceAdmin, 6);       Do not factory reset device on (any number of) wrong pin entries
-                }
-                catch(Exception e)
-                {
-                        Log.e(TAG, e.getMessage() );
-                }
-        }
-
+    /* Save the Password choice for the Patient's account */
+    private void choosePwdForPatient() {
+           savePinPwdSetting("password");
+           finish();
+    }
 
     public void addListenerOnButton() {
 
@@ -201,12 +210,10 @@ public class PinOrPasswordChoice extends Activity {
                 Toast.makeText(PinOrPasswordChoice.this,
                         radioPinOrPwd.getText(), Toast.LENGTH_SHORT).show();
                 if(selectedId == R.id.radioPIN ) {
-                   setAdminRules(REQUEST_CODE_RESET_PIN);
-                   setPin();
+                   choosePinForPatient();
 
                 } else if (selectedId == R.id.radioPWD ) {
-                   setAdminRules(REQUEST_CODE_RESET_PASSWORD);
-                   setPassword();
+                   choosePwdForPatient();
                 }
 
             }
@@ -239,75 +246,6 @@ public class PinOrPasswordChoice extends Activity {
                 dialog.show();
         }
 
-       @Override
-        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-            super.onActivityResult(requestCode, resultCode, data);
-            Log.i(TAG," request code = " +requestCode +" result code = " + resultCode + " RESULT_OK = "+Activity.RESULT_OK);
-            if (REQUEST_CODE_RESET_PASSWORD == requestCode)
-            {
-            Log.i(TAG," In passsword case , RequestCode = " +requestCode +" result code = " + resultCode);
-                    if (resultCode == Activity.RESULT_FIRST_USER)
-                    {
-                        if(!mDPM.isActivePasswordSufficient())
-                                {
-                                showOKDialog("Please choose your password","Insufficient Password");
-                                        setPassword();
-                                }
-                                else // password is sufficient
-                                {
-                                        mPasswordHasBeenSet= true;
-                                        ShowToast( "Password Successfully Changed",Toast.LENGTH_SHORT);
-                                }
-                    }
-                    else // if user chose cancelled from password change
-                    {
-                        //check again for sufficiency
-                                if(!mDPM.isActivePasswordSufficient())
-                                {
-                                        ShowToast( "Password not sufficient",Toast.LENGTH_SHORT);
-                                setPassword();
-                                }
-                                else // password is sufficient
-                                {
-                                        mPasswordHasBeenSet= true;
-                                        ShowToast( "Password conforms to password policy",Toast.LENGTH_SHORT);
-                                }
-                    }
-            }
-
-            else if (REQUEST_CODE_RESET_PIN == requestCode)
-            {
-                    if (resultCode == Activity.RESULT_FIRST_USER)
-                    {
-                        if(!mDPM.isActivePasswordSufficient())
-                                {
-                                        showOKDialog("Please choose your password","Insufficient Password");
-                                        setPin();
-                                }
-                                else // password is sufficient                                  
-                                {
-                                        mPasswordHasBeenSet= true;
-                                        ShowToast( "Pin Successfully Changed",Toast.LENGTH_SHORT);
-                                }
-                    }
-                    else // if user chose cancelled from password change
-                    {
-                        //check again for sufficiency
-                                if(!mDPM.isActivePasswordSufficient())
-                                {
-                                        ShowToast( "Password not sufficient",Toast.LENGTH_SHORT);
-                                setPin();
-                                }
-                                else // password is sufficient
-                                {
-                                        mPasswordHasBeenSet= true;
-                                        ShowToast( "Password conforms to password policy",Toast.LENGTH_SHORT);
-                                }
-                    }
-            }
-            checkAndReturnResult();
-            return;
-        }
   protected void callRestrictedAppUserSetup() {
            // start the restricted user config activity
 

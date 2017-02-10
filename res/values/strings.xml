@@ -290,6 +290,8 @@ Patient\'s can play various games, listen to music. This launcher is recommended
 
     <!-- PDi Additions -->
     <string name="welcome_head">WELCOME</string>
+    <string name="welcome_head_owner">WELCOME OWNER</string>
+    <string name="welcome_head_patient">WELCOME NEW PATIENT</string>
     <string name="welcome_intro">PDi-Tab can bring you more than just TV. A few steps before we start:</string>
     <string name="permission_secure_device">Secure Device - Ask your permission to Administer this PDi-TAB to secure your data</string>
     <string name="choose_password">Step 1 - Secure your personal data - choose a password for yourself</string>
@@ -308,12 +310,12 @@ Patient\'s can play various games, listen to music. This launcher is recommended
     <string name="pinterest">Pinterest</string>
     <string name="usePin">Use PIN</string>
     <string name="usePassword">Use Password</string>
-    <string name="choosePinPass">Please set your PIN or Passsword for your account</string>
+    <string name="choosePinPass">Please choose PIN or Passsword for the Patient\'s account</string>
     <string name="setLauncherText">Please set Default launcher for Patient\'s Account</string>
-    <string name="pinText"> Using PIN option set the personal identifcation number. Please enter a password containing at least numeric characters.
- Please remember this password to unlock the account when it is locked. </string>
-    <string name="passwordText"> Using Password option set the password for your account. Please enter  a password containing at least both> numeric and alphabetic (or other symbol) characters.
- Please remember this password to unlock the account when it is locked. </string>
+    <string name="pinText"> Using PIN option set the personal identifcation number for Patient\'s account. PIN is set as numeric value.
+   Once you choose PIN as a choice then any new patient\'s has to create their own PIN and use this PIN to unlock the account. </string>
+    <string name="passwordText"> Using Password option set the password for the Patient\'s account. Please enter a password containing at least both> numeric and alphabetic (or other symbol) characters.
+   Once you choose password as a choice then any new patient\'s has to create their own password and use this password to unlock the account. </string>
     <string name="nxsteps_training">Training</string>
     <string name="todo">TODO</string>
 <!-- End PDi Additions -->
