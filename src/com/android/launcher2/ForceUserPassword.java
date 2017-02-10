@@ -361,7 +361,7 @@ public  String getChoicePinorPwd() {
              Log.e(TAG,"Error in closing the BufferedReader");
      }
    }
- return pkgName;
+ return pinOrPwdChoice;
 }
 
 	
@@ -385,7 +385,7 @@ protected void checkAndReturnResult()
               startActivity(intent);
            } else {
                    Log.i(TAG, "Setting MEDTV Launcher for patient account");
-                   setThirdPartyLauncher(getApplicationContext());
+                   setDefaultLauncher(getApplicationContext());
              }
              finish();
          }
