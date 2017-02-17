@@ -134,6 +134,18 @@ import android.net.wifi.WifiManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.os.PowerManager;
 
+import android.content.pm.ResolveInfo;
+import android.content.pm.PackageManager;
+import android.content.IntentFilter;
+
+import android.os.UserManager;
+import android.os.UserHandle;
+import android.os.Process;
+import java.util.List;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.*;
+
 
 //PDi - Imports
 
@@ -890,10 +902,68 @@ public final class Launcher extends Activity
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
+  
+ /**
+  * returns the user id of the current process
+  */
+ protected Long getUser() {
+
+     UserHandle uh = Process.myUserHandle();
+     UserManager um = (UserManager) getSystemService(Context.USER_SERVICE);
+     Long userSerialNumber = um.getSerialNumberForUser(uh);
+     return userSerialNumber;
+ }
+
+
+private static ComponentName[] getActivitiesListByActionAndCategory (Context context, String action, String category) {
+   Intent queryIntent = new Intent(action);
+   queryIntent.addCategory(category);
+   List<ResolveInfo> resInfos = context.getPackageManager().queryIntentActivities(queryIntent, PackageManager.MATCH_DEFAULT_ONLY);
+   ComponentName[] componentNames = new ComponentName[resInfos.size()];
+   for (int i = 0; i < resInfos.size(); i++) {
+      ActivityInfo activityInfo = resInfos.get(i).activityInfo;
+      componentNames[i] = new ComponentName(activityInfo.packageName, activityInfo.name); }
+   return componentNames;
+}
+
+/**
+  * sets the MEDTV  launcher for Patient's account.
+ */
+private void setThirdPartyLauncher(Context context) {
+   context.getPackageManager().clearPackagePreferredActivities("com.android.launcher");
+
+   ComponentName defaultLauncherCmp = new ComponentName("com.android.launcher", "com.android.launcher2.Launcher");
+   PackageManager p = context.getPackageManager();
+   p.setComponentEnabledSetting(defaultLauncherCmp, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+
+   ComponentName cN = new ComponentName("com.allentek.medtv", "com.allentek.medtv.MainActivity");
+
+   IntentFilter filter = new IntentFilter(Intent.ACTION_MAIN);
+   filter.addCategory(Intent.CATEGORY_HOME);
+   filter.addCategory(Intent.CATEGORY_DEFAULT);
+   ComponentName[] currentHomeActivities = getActivitiesListByActionAndCategory(context, Intent.ACTION_MAIN, Intent.CATEGORY_HOME);
+   ComponentName newPreferredActivity = new ComponentName("com.allentek.medtv", "com.allentek.medtv.MainActivity");
+   context.getPackageManager().addPreferredActivity(filter, IntentFilter.MATCH_CATEGORY_EMPTY, currentHomeActivities, newPreferredActivity);
+
+   p.setComponentEnabledSetting(cN, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+
+   Intent launchIntent = new Intent();
+   launchIntent.setClassName("com.allentek.medtv", "com.allentek.medtv.MainActivity");
+   launchIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+   launchIntent.addCategory(Intent.CATEGORY_HOME);
+   launchIntent.addCategory(Intent.CATEGORY_DEFAULT);
+   launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+   context.startActivityAsUser(launchIntent, UserHandle.CURRENT);
+   p.setComponentEnabledSetting(cN, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT, PackageManager.DONT_KILL_APP);
+
+   finish();
+}
+
     @Override
     protected void onActivityResult(
             final int requestCode, final int resultCode, final Intent data) {
 		//Start - PDi Addition
+        Log.i(TAG," requestCode = "+requestCode + " result code - "+ resultCode);
         if (requestCode == REQUEST_CODE_CHOOSE_PASSWORD) 
         {	
         	if (resultCode == RESULT_OK)
@@ -912,6 +982,10 @@ public final class Launcher extends Activity
         		    editor.commit();        		
         		}       		
         	}        	
+            releaseWakeLock();
+            if(getUser() != 0) {
+               setThirdPartyLauncher(getApplicationContext());
+            }
             return;
         }
 

@@ -47,9 +47,9 @@ public class ForceUserPassword extends Activity {
     protected boolean mPasswordHasBeenSet = false;
     private static final int REQUEST_CODE_ENABLE_ADMIN = 1;
     private static final int REQUEST_CODE_RESET_PASSWORD = 2;
-    private static final int REQUEST_CODE_PIN_OR_PASSWORD = 11;
-    private static final int REQUEST_CODE_PIN = 12;
-    private static final int REQUEST_CODE_PASSWORD = 13;
+    private static final int REQUEST_SET_PASSWORD = 11;
+    private static final int REQUEST_SET_PIN_OR_PASSWORD = 12;
+    private static final int REQUEST_SET_PIN_OR_PASSWORD_PATIENT = 13;
     
     private static final long MS_PER_MINUTE = 60 * 1000;
     private static final long MS_PER_HOUR = 60 * MS_PER_MINUTE;
@@ -57,7 +57,8 @@ public class ForceUserPassword extends Activity {
     
     private static final String TAG = "ForceUserPassword";
     private static final String PatientsPinPwd = "patientsPinPwd.txt";
-
+    private static final String PDI_PREFERENCES= "pdi_preferences";
+    private static final String PASSWORD_HAS_BEEN_SET= "password_has_been_set";
     
 	
 	@Override
@@ -84,7 +85,7 @@ public class ForceUserPassword extends Activity {
 	   button.setOnClickListener(btnListener);
 	   button.requestFocus();
 	
-           getApplicationContext().getPackageManager().clearPackagePreferredActivities("com.allentek.abe");
+           getApplicationContext().getPackageManager().clearPackagePreferredActivities("com.allentek.medtv");
 	   checkAndReturnResult();				
 		   
 	}
@@ -160,7 +161,7 @@ public class ForceUserPassword extends Activity {
                 if( getUser() == 0 ) {
                     Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
                     intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC);
-                    startActivityForResult(intent, REQUEST_CODE_PIN_OR_PASSWORD);
+                    startActivityForResult(intent, REQUEST_SET_PASSWORD);
                     Log.i(TAG, "Setting password for Owner account");
                 } else {
                     String pinOrPwd = getChoicePinorPwd();
@@ -172,7 +173,7 @@ public class ForceUserPassword extends Activity {
                         Log.i(TAG, "Setting PIN for patient account");
                         Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
                         intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
-                        startActivityForResult(intent, REQUEST_CODE_PIN);
+                        startActivityForResult(intent, REQUEST_SET_PIN_OR_PASSWORD_PATIENT);
 
                      } else {
                          mDPM.setPasswordQuality(mDeviceAdmin, DevicePolicyManager.PASSWORD_QUALITY_ALPHANUMERIC);
@@ -182,7 +183,7 @@ public class ForceUserPassword extends Activity {
                          Log.i(TAG, "Setting password for patient account");
                          Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
                          intent.putExtra("lockscreen.password_type", DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC);
-                         startActivityForResult(intent, REQUEST_CODE_PASSWORD);
+                         startActivityForResult(intent, REQUEST_SET_PIN_OR_PASSWORD_PATIENT);
 
                      }
                 }
@@ -208,7 +209,7 @@ public class ForceUserPassword extends Activity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	    super.onActivityResult(requestCode, resultCode, data);
 	    //TODO handle here. 
-            Log.i(TAG,"SAGAR requestCode - "+requestCode +"resultCode - " +resultCode);
+            Log.d(TAG,"requestCode - "+requestCode +"resultCode - " +resultCode);
 	    
 	    if (REQUEST_CODE_ENABLE_ADMIN == requestCode)
 	    {
@@ -225,7 +226,11 @@ public class ForceUserPassword extends Activity {
 		    	ShowToast( "Device Admin must be Activated to continue!",Toast.LENGTH_SHORT);    			    					
 		    }
 	    }
-            if((REQUEST_CODE_PIN == requestCode || REQUEST_CODE_PASSWORD ==requestCode || REQUEST_CODE_PIN_OR_PASSWORD == requestCode) ) {
+            if (REQUEST_SET_PASSWORD == requestCode ) {
+              Intent intent = new Intent(this, PinOrPasswordChoice.class);
+              startActivityForResult(intent, REQUEST_SET_PIN_OR_PASSWORD);
+            }
+            if((REQUEST_SET_PIN_OR_PASSWORD == requestCode) || REQUEST_SET_PIN_OR_PASSWORD_PATIENT == requestCode) {
 
              Log.i(TAG, "Password/Pin has been set ");
              mPasswordHasBeenSet = true;
@@ -267,70 +272,6 @@ public class ForceUserPassword extends Activity {
         Long userSerialNumber = um.getSerialNumberForUser(uh);
         return userSerialNumber;
     }
-
-private static ComponentName[] getActivitiesListByActionAndCategory (Context context, String action, String category) {
-   Intent queryIntent = new Intent(action);
-   queryIntent.addCategory(category);
-   List<ResolveInfo> resInfos = context.getPackageManager().queryIntentActivities(queryIntent, PackageManager.MATCH_DEFAULT_ONLY);
-   ComponentName[] componentNames = new ComponentName[resInfos.size()];
-   for (int i = 0; i < resInfos.size(); i++) {
-      ActivityInfo activityInfo = resInfos.get(i).activityInfo;
-      componentNames[i] = new ComponentName(activityInfo.packageName, activityInfo.name); }
-   return componentNames;
-}
-
-/**
-  * sets the third party launcher.
-  * Todo - need to remove the launcher pkgname com.teslacoilsw.launcher (pkg name) and com.teslacoilsw.launcher.NovaLauncher (activity name) and
-  * replace with Allan tech launcher in this code
- */
-private void setThirdPartyLauncher(Context context) {
-   context.getPackageManager().clearPackagePreferredActivities("com.android.launcher");
-
-   ComponentName defaultLauncherCmp = new ComponentName("com.android.launcher", "com.android.launcher2.Launcher");
-   PackageManager p = context.getPackageManager();
-   p.setComponentEnabledSetting(defaultLauncherCmp, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-
-   ComponentName cN = new ComponentName("com.allentek.abe", "com.allentek.abe.MainActivity");
-
-   IntentFilter filter = new IntentFilter(Intent.ACTION_MAIN);
-   filter.addCategory(Intent.CATEGORY_HOME);
-   filter.addCategory(Intent.CATEGORY_DEFAULT);
-   ComponentName[] currentHomeActivities = getActivitiesListByActionAndCategory(context, Intent.ACTION_MAIN, Intent.CATEGORY_HOME);
-   ComponentName newPreferredActivity = new ComponentName("com.allentek.abe", "com.allentek.abe.MainActivity");
-   context.getPackageManager().addPreferredActivity(filter, IntentFilter.MATCH_CATEGORY_EMPTY, currentHomeActivities, newPreferredActivity);
-
-   p.setComponentEnabledSetting(cN, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-
-   Intent launchIntent = new Intent();
-   launchIntent.setClassName("com.allentek.abe", "com.allentek.abe.MainActivity");
-   launchIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-   launchIntent.addCategory(Intent.CATEGORY_HOME);
-   launchIntent.addCategory(Intent.CATEGORY_DEFAULT);
-   launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-   context.startActivityAsUser(launchIntent, UserHandle.CURRENT);
-   p.setComponentEnabledSetting(cN, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT, PackageManager.DONT_KILL_APP);
-
-   finish();
-}
-
-
-/**
-  * sets the default launcher.
-  * Todo - need to remove the launcher pkgname com.teslacoilsw.launcher and
-  * replace with Allan tech launcher in this code
- */
-private void setDefaultLauncher(Context context) {
-   context.getPackageManager().clearPackagePreferredActivities("com.allentek.abe");
-
-   IntentFilter filter = new IntentFilter(Intent.ACTION_MAIN);
-   filter.addCategory(Intent.CATEGORY_HOME);
-   filter.addCategory(Intent.CATEGORY_DEFAULT);
-   ComponentName[] currentHomeActivities = getActivitiesListByActionAndCategory(context, Intent.ACTION_MAIN, Intent.CATEGORY_HOME);
-   ComponentName newPreferredActivity = new ComponentName("com.android.launcher", "com.android.launcher2.Launcher");
-   context.getPackageManager().addPreferredActivity(filter, IntentFilter.MATCH_CATEGORY_EMPTY, currentHomeActivities, newPreferredActivity);
-   finish();
-}
 
 
 /* returns the pin/password choice set by owner for patients account */
@@ -379,14 +320,6 @@ protected void checkAndReturnResult()
 	   } else {
 	       getParent().setResult(Activity.RESULT_OK, data);
            }
-
-           if(getUser() == 0) {
-              Intent intent = new Intent(this, PinOrPasswordChoice.class);
-              startActivity(intent);
-           } else {
-                   Log.i(TAG, "Setting MEDTV Launcher for patient account");
-                   setThirdPartyLauncher(getApplicationContext());
-             }
              finish();
          }
 	return;
