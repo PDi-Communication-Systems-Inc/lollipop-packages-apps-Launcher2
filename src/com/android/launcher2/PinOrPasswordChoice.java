@@ -255,37 +255,6 @@ public class PinOrPasswordChoice extends Activity {
            return;
     }
 
-       @Override
-      public void finish() {
-        // Prepare data intent
-            Intent data = this.getIntent();
-            data.putExtra("PASSWORD", "SET");
-            if (getParent() == null) {
-              Log.i(TAG, " getParent null ");
-                setResult(Activity.RESULT_OK, data);
-            } else {
-                getParent().setResult(Activity.RESULT_OK, data);
-              Log.i(TAG, " getParent setRsult ");
-            }
-
-        // Activity finished ok, return the data
-        setResult(Activity.RESULT_OK, data);
-        super.finish();
-      }
-
-        protected void checkAndReturnResult()
-        {
-                //Verify password has been set
-        Log.i(TAG, mPasswordHasBeenSet ? "Password has been set" :
-                "Password has not been set");
-                if(mPasswordHasBeenSet)
-                {
-                        Log.i(TAG," Finishing the activity ");
-                        finish();
-                }
-                return;
-        }
-
     /**
      * Sample implementation of a DeviceAdminReceiver.  Your controller must provide one,
      * although you may or may not implement all of the methods shown here.
