@@ -311,11 +311,11 @@ Patient\'s can play various games, listen to music. This launcher is recommended
     <string name="pinterest">Pinterest</string>
     <string name="usePin">Use PIN</string>
     <string name="usePassword">Use Password</string>
-    <string name="choosePinPass">Please choose PIN or Passsword for the Patient\'s account</string>
+    <string name="choosePinPass">Please choose PIN or Password for the patient\'s account</string>
     <string name="setLauncherText">Please set Default launcher for Patient\'s Account</string>
     <string name="pinText"> By selecting PIN option, Patient\'s have to set the personal identifcation number for their individual account. PIN is set as numeric value.
    Patient\'s will use their PIN to unlock the individual account. </string>
-    <string name="passwordText"> By selecting password option, Patient\'s have to set the password for their individual account. 
+    <string name="passwordText"> By selecting password option, patient\'s have to set the password for their individual account.
    password is set as at least both> numeric and alphabetic (or other symbol) characters. Patient\'s will use their password to unlock the individual account. </string>
     <string name="nxsteps_training">Training</string>
     <string name="todo">TODO</string>
