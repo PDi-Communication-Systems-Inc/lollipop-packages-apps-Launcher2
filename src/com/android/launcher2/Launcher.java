@@ -983,9 +983,6 @@ private void setThirdPartyLauncher(Context context) {
         		}       		
         	}        	
             releaseWakeLock();
-            if(getUser() != 0) {
-               setThirdPartyLauncher(getApplicationContext());
-            }
             return;
         }
 
