@@ -315,7 +315,7 @@ s -->
     <string name="pinText"> By selecting the PIN option, patients will have to set the personal identifcation number (PIN) for their individual account. PIN is set as a numeric value.
    Patients will use their PIN to unlock the individual account. </string>
     <string name="passwordText"> By selecting the password option, patients will have to set up an alphanumeric password for their individual account. 
-   password is set using a combination of numeric, alphabetic, and symbolic characters. Patients will use their password to unlock the individual account. </string>
+   Password is set using a combination of numeric, alphabetic, and symbolic characters. Patients will use their password to unlock the individual account. </string>
     <string name="nxsteps_training">Training</string>
     <string name="todo">TODO</string>
 <!-- End PDi Additions -->
