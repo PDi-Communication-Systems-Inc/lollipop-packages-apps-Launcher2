@@ -110,7 +110,7 @@ s -->
     <!-- Default Launcher  -->
     <string name="title_default_launcher_txt"> This launcher is provided by Google and provides access to a variety of android apps from home screen. The patient can also set up their own widgets and organize their apps to their liking. This launcher has access to settings app where you can modify the Account settings etc. </string>
     <!-- Thirdparty  Launcher  -->
-    <string name="title_thirdparty_launcher"> PDi Basic Launcher (Recommended Launcher)  </string>
+    <string name="title_thirdparty_launcher"> PDi-TAB\u00AE2 Basic Launcher (Recommended Launcher)  </string>
     <!-- Thirdparty  Launcher  -->
     <string name="title_thirdparty_launcher_txt"> This launcher has a single screen to allow the patient to launch various apps like games, watching on-demand video\'s, playing music, browsing internet. It has a simplified, easy-to-navigate space to make apps more discoverable by patient\'s.
   </string>
@@ -291,8 +291,8 @@ s -->
     <string name="welcome_head">WELCOME</string>
     <string name="welcome_head_owner">WELCOME OWNER</string>
     <string name="welcome_head_patient">WELCOME NEW PATIENT</string>
-    <string name="welcome_intro">PDi-Tab can bring you more than just TV. A few steps before we start:</string>
-    <string name="permission_secure_device">Secure Device - Ask your permission to Administer this PDi-TAB to secure your data</string>
+    <string name="welcome_intro">PDi-Tab\u00AE2 can bring you more than just TV. A few steps before we start:</string>
+    <string name="permission_secure_device">Secure Device - Ask your permission to Administer this PDi-TAB\u00AE2 to secure your data</string>
     <string name="choose_password">Step 1 - Secure your personal data - choose a password for yourself</string>
     <string name="home_screen">Step 2 - Device Setup - Device will configure itself and take you to the home screen</string>
     <string name="touch_here">Continue</string>
