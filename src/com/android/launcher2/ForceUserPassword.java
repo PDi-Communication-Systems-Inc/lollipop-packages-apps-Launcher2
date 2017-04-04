@@ -227,10 +227,27 @@ public class ForceUserPassword extends Activity {
 		    }
 	    }
             if (REQUEST_SET_PASSWORD == requestCode ) {
-              Intent intent = new Intent(this, PinOrPasswordChoice.class);
-              startActivityForResult(intent, REQUEST_SET_PIN_OR_PASSWORD);
+               if(resultCode == Activity.RESULT_CANCELED) {
+		  ShowToast("Failed or cancelled ",Toast.LENGTH_SHORT);		    	
+                  resetPassword();
+                  return;
+                }
+
+                 Intent intent = new Intent(this, PinOrPasswordChoice.class);
+                 startActivityForResult(intent, REQUEST_SET_PIN_OR_PASSWORD);
+
             }
-            if((REQUEST_SET_PIN_OR_PASSWORD == requestCode) || REQUEST_SET_PIN_OR_PASSWORD_PATIENT == requestCode) {
+            if(REQUEST_SET_PIN_OR_PASSWORD == requestCode)  {
+             Log.i(TAG, "Password/Pin has been set ");
+             mPasswordHasBeenSet = true;
+
+            }
+            if( REQUEST_SET_PIN_OR_PASSWORD_PATIENT == requestCode) {
+               if(resultCode == Activity.RESULT_CANCELED) {
+		  ShowToast("Failed or cancelled ",Toast.LENGTH_SHORT);		    	
+                  resetPassword();
+                  return;
+                }
 
              Log.i(TAG, "Password/Pin has been set ");
              mPasswordHasBeenSet = true;
