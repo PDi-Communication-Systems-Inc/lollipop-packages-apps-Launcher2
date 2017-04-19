@@ -936,19 +936,19 @@ private void setThirdPartyLauncher(Context context) {
    PackageManager p = context.getPackageManager();
    p.setComponentEnabledSetting(defaultLauncherCmp, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
 
-   ComponentName cN = new ComponentName("com.allentek.medtv", "com.allentek.medtv.MainActivity");
+   ComponentName cN = new ComponentName("pdiarm.com.pditv", "pdiarm.com.pditv.PDiMainActivity");
 
    IntentFilter filter = new IntentFilter(Intent.ACTION_MAIN);
    filter.addCategory(Intent.CATEGORY_HOME);
    filter.addCategory(Intent.CATEGORY_DEFAULT);
    ComponentName[] currentHomeActivities = getActivitiesListByActionAndCategory(context, Intent.ACTION_MAIN, Intent.CATEGORY_HOME);
-   ComponentName newPreferredActivity = new ComponentName("com.allentek.medtv", "com.allentek.medtv.MainActivity");
+   ComponentName newPreferredActivity = new ComponentName("pdiarm.com.pditv", "pdiarm.com.pditv.PDiMainActivity");
    context.getPackageManager().addPreferredActivity(filter, IntentFilter.MATCH_CATEGORY_EMPTY, currentHomeActivities, newPreferredActivity);
 
    p.setComponentEnabledSetting(cN, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
 
    Intent launchIntent = new Intent();
-   launchIntent.setClassName("com.allentek.medtv", "com.allentek.medtv.MainActivity");
+   launchIntent.setClassName("pdiarm.com.pditv", "pdiarm.com.pditv.PDiMainActivity");
    launchIntent.addCategory(Intent.CATEGORY_LAUNCHER);
    launchIntent.addCategory(Intent.CATEGORY_HOME);
    launchIntent.addCategory(Intent.CATEGORY_DEFAULT);
