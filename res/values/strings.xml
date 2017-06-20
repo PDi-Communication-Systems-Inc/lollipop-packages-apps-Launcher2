@@ -292,8 +292,8 @@ Patient\'s can play various games, listen to music. This launcher is recommended
     <string name="welcome_head">WELCOME</string>
     <string name="welcome_head_owner">WELCOME OWNER</string>
     <string name="welcome_head_patient">WELCOME NEW PATIENT</string>
-    <string name="welcome_intro">PDi-TAB\u00AE can bring you more than just TV. A few steps before we start:</string>
-    <string name="permission_secure_device">Secure Device - Ask your permission to Administer this PDi-TAB\u00AE to secure your data</string>
+    <string name="welcome_intro">medTV can bring you more than just TV. A few steps before we start:</string>
+    <string name="permission_secure_device">Secure Device - Ask your permission to Administer this medTV to secure your data</string>
     <string name="choose_password">Step 1 - Secure your personal data - choose a password for yourself</string>
     <string name="home_screen">Step 2 - Device Setup - Device will configure itself and take you to the home screen</string>
     <string name="touch_here">Continue</string>
