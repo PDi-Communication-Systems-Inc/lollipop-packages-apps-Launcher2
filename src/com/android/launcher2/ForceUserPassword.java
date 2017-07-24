@@ -87,7 +87,7 @@ public class ForceUserPassword extends Activity {
 	
            getApplicationContext().getPackageManager().clearPackagePreferredActivities("com.allentek.medtv");
 	   checkAndReturnResult();				
-           android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, 210); // 0-255 is brightness range. 210 will give enough brightness
+           android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, 254); // 0-255 is brightness range. 210 will give enough brightness
 		   
 	}
 	
