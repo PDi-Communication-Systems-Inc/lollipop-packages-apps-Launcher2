@@ -962,6 +962,7 @@ private void setThirdPartyLauncher(Context context) {
     @Override
     protected void onActivityResult(
             final int requestCode, final int resultCode, final Intent data) {
+            boolean passwordHasBeenSet = false;
 		//Start - PDi Addition
         Log.i(TAG," requestCode = "+requestCode + " result code - "+ resultCode);
         if (requestCode == REQUEST_CODE_CHOOSE_PASSWORD) 
@@ -980,12 +981,19 @@ private void setThirdPartyLauncher(Context context) {
         			Editor editor = prefs.edit();
         		    editor.putBoolean(PASSWORD_HAS_BEEN_SET, true);
         		    editor.commit();        		
-        		}       		
+                            passwordHasBeenSet = true;
+        		} else {
+                          Log.i(TAG," Password has not been set ");
+                        }
         	}        	
             releaseWakeLock();
             if(getUser() != 0) {
-               setThirdPartyLauncher(getApplicationContext());
-            }
+               if (passwordHasBeenSet)
+                   setThirdPartyLauncher(getApplicationContext());
+               } else {
+                          Log.i(TAG," Password has not been set hence not launching MEDTV launcher ");
+               }
+ 
             return;
         }
 
