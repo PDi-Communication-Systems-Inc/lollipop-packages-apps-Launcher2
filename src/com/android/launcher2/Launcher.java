@@ -354,6 +354,7 @@ public final class Launcher extends Activity
     private static final int REQUEST_CODE_CHOOSE_PASSWORD = 31;
     private static final String PASSWORD_HAS_BEEN_SET= "password_has_been_set";
     private static final String INTENT_FORCE_PASSWORD= "android.intent.action.FORCE_PASSWORD";
+    private static final String displayTimeout = "displayTimeout.txt";
     
     private static final String BOOTING_AFTER_WIPE_OR_FACTORY_RESET= "booting_after_wipe_or_factory_reset";
 
@@ -953,11 +954,45 @@ private void setThirdPartyLauncher(Context context) {
    launchIntent.addCategory(Intent.CATEGORY_HOME);
    launchIntent.addCategory(Intent.CATEGORY_DEFAULT);
    launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-   context.startActivityAsUser(launchIntent, UserHandle.CURRENT);
+   UserManager um = (UserManager) getSystemService(Context.USER_SERVICE);
+   UserHandle myuh = um.getUserForSerialNumber(ActivityManager.getCurrentUser());
+   context.startActivityAsUser(launchIntent, myuh);
    p.setComponentEnabledSetting(cN, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT, PackageManager.DONT_KILL_APP);
 
    finish();
 }
+
+
+    private void setDisplayTimeout() {
+            File dirLauncher = new File("/mnt/sdcard/Android/obb/displaySetting");
+            BufferedReader reader = null;
+            String displayTimeoutStr = "";
+            StringBuilder sb = new StringBuilder();
+            try {
+                  File file  = new File(dirLauncher, displayTimeout);
+                  reader = new BufferedReader(new FileReader(file));
+                  displayTimeoutStr = reader.readLine();
+                  if(displayTimeoutStr == null) {
+                     Log.i(TAG, "string is null ");
+                     displayTimeoutStr = "60000"; //timeout is set to 10 min by default for patient account
+                  }
+                  long time = Long.parseLong(displayTimeoutStr);
+                  Log.i(TAG, "Display time value - "+time);
+                  android.provider.Settings.System.putLong(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT, time);
+                  reader.close();
+            } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.e(TAG,"Error in reading obb file ");
+            } finally {
+                   try {
+                      if ( reader != null ) {
+                           reader.close();
+                       }
+                    }  catch (IOException e) {
+                          Log.e(TAG,"Error in closing the BufferedReader");
+                     }
+               }
+    }
 
     @Override
     protected void onActivityResult(
@@ -989,6 +1024,7 @@ private void setThirdPartyLauncher(Context context) {
             releaseWakeLock();
             if(getUser() != 0) {
                if (passwordHasBeenSet)
+                   setDisplayTimeout();
                    setThirdPartyLauncher(getApplicationContext());
                } else {
                           Log.i(TAG," Password has not been set hence not launching MEDTV launcher ");
