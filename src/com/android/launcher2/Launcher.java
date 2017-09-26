@@ -406,20 +406,7 @@ public final class Launcher extends Activity
 
     private void SetPasswordFunction()
     {
-    	try
-		{
-			// Call the force user password activity
-			Intent intent = new Intent(INTENT_FORCE_PASSWORD);
-			startActivityForResult(intent, REQUEST_CODE_CHOOSE_PASSWORD);
-			Log.i(TAG,"Request to choose password has been sent");	
-			//sleep for a second in this thread
-			//android.os.SystemClock.sleep(1000);
-		} 
-		catch(Exception e)
-		{
-			showToast(e.getMessage());						
-			Log.e(TAG,e.getMessage());											
-		}
+       return; //returning here as AT image don't want to have login/mulitple user accounts
     }
  
     public String RemoveBackSlashN(String str) {
@@ -623,7 +610,8 @@ public final class Launcher extends Activity
         partialWakeLock = powerManager.newWakeLock((PowerManager. PARTIAL_WAKE_LOCK), "Launcher - Partial WAKE LOCK");
         //Acquire Partial Wakelock
         acquirePartialWakeLock();        
-        
+        android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, 254); // 0-255 is brightness range. 210 will give enough brightness
+ 
         //Start - adds for overscan hard coded fix
         //End - adds for overscan hard coded fix 
         
